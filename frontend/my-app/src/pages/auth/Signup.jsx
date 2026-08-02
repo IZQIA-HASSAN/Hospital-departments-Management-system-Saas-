@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import gsap from "gsap";
+import { useMutation } from "@tanstack/react-query";
 import { Eye, EyeOff, ArrowRight, Check } from "lucide-react";
 
 const ROLES = [
@@ -14,11 +15,58 @@ const STEPS_PREVIEW = [
   { id: "02", name: "N. Alvarez", time: "15:00–23:00", ward: "ER" },
 ];
 
+// let connect backend here
+const API_URL = "http://localhost:5000/api";
+
+const signupuser = async (payload) => {
+  const res = await fetch(`${API_URL}/auth/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || "something went wrong . please try again")
+  }
+  return data;
+}
+
 export default function Signup() {
   const rootRef = useRef(null);
   const pathRef = useRef(null);
+  const navigate = useNavigate();
   const [showPw, setShowPw] = useState(false);
   const [role, setRole] = useState("staff");
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: ""
+  });
+
+  const handlechange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.id]: e.target.value }))
+  }
+
+  const { mutate, isPending, isError, error } = useMutation({
+    mutationFn: signupuser,
+    onSuccess: (data) => {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      navigate("/Login");
+    }
+  })
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    mutate({
+      name: `${form.name}`,
+      email: form.email,
+      password: form.password,
+      role,
+    })
+  }
+
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -55,10 +103,7 @@ export default function Signup() {
     return () => ctx.revert();
   }, []);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // wire up auth here
-  };
+
 
   return (
     <div ref={rootRef} className="min-h-screen grid lg:grid-cols-2 bg-neutral-50 text-neutral-900">
@@ -134,11 +179,10 @@ export default function Signup() {
                     key={r.id}
                     type="button"
                     onClick={() => setRole(r.id)}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm border transition-colors ${
-                      role === r.id
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm border transition-colors ${role === r.id
                         ? "bg-emerald-700 border-emerald-700 text-neutral-50"
                         : "border-neutral-300 text-neutral-600 hover:border-neutral-400"
-                    }`}
+                      }`}
                   >
                     {role === r.id && <Check size={13} />}
                     {r.label}
@@ -150,38 +194,31 @@ export default function Signup() {
             <div className="auth-field grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="firstName" className="font-mono text-xs tracking-wide text-neutral-500">
-                  FIRST NAME
+                  FULL NAME
                 </label>
                 <input
-                  id="firstName"
+                  id="name"
                   type="text"
+                  value={form.name}
+                  onChange={handlechange}
                   required
                   placeholder="Amara"
                   className="bg-transparent border-b border-neutral-300 py-2.5 text-[0.98rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
                 />
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="lastName" className="font-mono text-xs tracking-wide text-neutral-500">
-                  LAST NAME
-                </label>
-                <input
-                  id="lastName"
-                  type="text"
-                  required
-                  placeholder="Osei"
-                  className="bg-transparent border-b border-neutral-300 py-2.5 text-[0.98rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
-                />
-              </div>
+             
             </div>
 
             <div className="auth-field flex flex-col gap-1.5">
               <label htmlFor="email" className="font-mono text-xs tracking-wide text-neutral-500">
-                 EMAIL
+                EMAIL
               </label>
               <input
                 id="email"
                 type="email"
                 required
+                value={form.email}
+                onChange={handlechange}
                 placeholder="you@hospital.org"
                 className="bg-transparent border-b border-neutral-300 py-2.5 text-[0.98rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
               />
@@ -197,6 +234,8 @@ export default function Signup() {
                   type={showPw ? "text" : "password"}
                   required
                   minLength={8}
+                  value={form.password}
+                  onChange={handlechange}
                   placeholder="At least 8 characters"
                   className="w-full bg-transparent border-b border-neutral-300 py-2.5 pr-8 text-[0.98rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
                 />
@@ -210,6 +249,9 @@ export default function Signup() {
                 </button>
               </div>
             </div>
+            {isError && (
+              <p className="auth-field text-sm text-red-600 -mt-2">{error.message}</p>
+            )}
 
             <p className="auth-field text-xs opacity-50 -mt-2 leading-relaxed">
               By creating an account you agree to Round's{" "}
@@ -219,10 +261,13 @@ export default function Signup() {
 
             <button
               type="submit"
+              disabled={isPending}
               className="auth-field group bg-emerald-700 text-neutral-50 px-7 py-3.5 rounded-full text-sm font-medium flex items-center justify-center gap-2 hover:bg-emerald-800 transition-colors"
             >
-              Create account
-              <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+              {isPending ? "Creating account" : "Create Account"}
+              {!isPending && (
+                <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+              )}
             </button>
           </form>
         </div>

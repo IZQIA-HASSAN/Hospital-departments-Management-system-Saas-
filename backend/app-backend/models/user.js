@@ -15,11 +15,13 @@ module.exports =  (sequelize, DataTypes) => {
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true
+      unique: true,
+      validate : {isEmail : true}
     },
     password: {
       type: DataTypes.STRING,
       allowNull: false
+
     }
   }, {
     sequelize,
@@ -31,6 +33,10 @@ module.exports =  (sequelize, DataTypes) => {
 const bcrypt = require('bcryptjs')
 
 User.beforeCreate(async(user)=>{
+// let hash passowrd automatically whenever it is set
+
+const bcrypt = require('bcryptjs')
+User = beforeCreate(async(user)=>{
   if(user.password){
     user.password = await bcrypt.hash(user.password , 10)
   }
