@@ -1,7 +1,7 @@
 'use strict';
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+module.exports =  (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
       // define associations here later if needed
@@ -30,7 +30,7 @@ module.exports = (sequelize, DataTypes) => {
 // let hash passowrd automatically whenever it is set
 
 const bcrypt = require('bcryptjs')
-User = beforeCreate(async(user)=>{
+User.beforeCreate(async(user)=>{
   if(user.password){
     user.password = await bcrypt.hash(user.password , 10)
   }
@@ -54,3 +54,4 @@ User.prototype.toJSON = function () {
 
   return User;
 };
+
