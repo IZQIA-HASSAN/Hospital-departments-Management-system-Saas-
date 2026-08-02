@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import gsap from "gsap";
+import { useMutation } from "@tanstack/react-query";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 
 const SHIFTS = [
@@ -9,10 +10,56 @@ const SHIFTS = [
   { id: "05", name: "Dr. L. Chen", time: "15:00–23:00", ward: "ER" },
 ];
 
+const API_URL = "http://localhost:5000/api";
+
+
+const loginuser =async (payload)=>{
+const res = await fetch(`${API_URL}/auth/login` , {
+  method : "POST",
+  headers : {"Content-type" : "application/json"},
+  body:JSON.stringify(payload),
+})
+const data = await res.json();
+if(!res.ok){
+throw new Error(data.message || "invalid email or something went wrongg")
+}
+return data;
+}
+
+
+
+
 export default function Login() {
   const rootRef = useRef(null);
   const pathRef = useRef(null);
+  const navigate = useNavigate()
+  
   const [showPw, setShowPw] = useState(false);
+  const [form , setForm] = useState({
+    email : "",
+    password:"",
+  })
+
+const handleChange = ((e)=>{
+  setForm((prev)=>({...prev  , [e.target.id] : e.target.value}))
+})
+
+const {mutate , isPending , isError , error} = useMutation({
+  mutationFn : loginuser,
+  onSuccess:(data)=>{
+     localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      navigate("/dashboard");
+  }
+})
+
+const handleSubmit = (e)=>{
+e.preventDefault();
+mutate({
+  email : form.email,
+  password : form.password,
+})
+}
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -49,10 +96,7 @@ export default function Login() {
     return () => ctx.revert();
   }, []);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // wire up auth here
-  };
+
 
   return (
     <div ref={rootRef} className="min-h-screen grid lg:grid-cols-2 bg-neutral-50 text-neutral-900">
@@ -128,6 +172,8 @@ export default function Login() {
                 id="email"
                 type="email"
                 required
+                value={form.email}
+                onChange={handleChange}
                 placeholder="you@hospital.org"
                 className="bg-transparent border-b border-neutral-300 py-2.5 text-[0.98rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
               />
@@ -147,6 +193,8 @@ export default function Login() {
                   id="password"
                   type={showPw ? "text" : "password"}
                   required
+                  value={form.password}
+                onChange={handleChange}
                   placeholder="••••••••"
                   className="w-full bg-transparent border-b border-neutral-300 py-2.5 pr-8 text-[0.98rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
                 />
@@ -167,12 +215,15 @@ export default function Login() {
             </label>
 
             <button
-              type="submit"
+              type="submit" disabled={isPending}
               className="auth-field group bg-emerald-700 text-neutral-50 px-7 py-3.5 rounded-full text-sm font-medium flex items-center justify-center gap-2 hover:bg-emerald-800 transition-colors"
             >
-              Sign in
+              {isPending ? "loggin you in .." : "log in to account"}
               <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
             </button>
+            {isError &&(
+              <p>{error.message}</p>
+            )}
           </form>
         </div>
       </div>
