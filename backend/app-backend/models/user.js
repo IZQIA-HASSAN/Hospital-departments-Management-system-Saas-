@@ -1,12 +1,14 @@
 'use strict';
 const { Model } = require('sequelize');
+const bcrypt = require('bcryptjs');
 
-module.exports =  (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
       // define associations here later if needed
     }
   }
+
   User.init({
     name: {
       type: DataTypes.STRING,
@@ -16,49 +18,39 @@ module.exports =  (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
-      validate : {isEmail : true}
+      validate: { isEmail: true }
     },
     password: {
       type: DataTypes.STRING,
       allowNull: false
-
     }
   }, {
     sequelize,
     modelName: 'User',
   });
 
-// let hash passowrd automatically whenever it is set
+  // hash password automatically whenever it is set
+  User.beforeCreate(async (user) => {
+    if (user.password) {
+      user.password = await bcrypt.hash(user.password, 10);
+    }
+  });
 
-const bcrypt = require('bcryptjs')
+  User.beforeUpdate(async (user) => {
+    if (user.changed('password')) {
+      user.password = await bcrypt.hash(user.password, 10);
+    }
+  });
 
-User.beforeCreate(async(user)=>{
-// let hash passowrd automatically whenever it is set
+  User.prototype.comparePassword = function (plainPassword) {
+    return bcrypt.compare(plainPassword, this.password);
+  };
 
-const bcrypt = require('bcryptjs')
-User = beforeCreate(async(user)=>{
-  if(user.password){
-    user.password = await bcrypt.hash(user.password , 10)
-  }
-});
+  User.prototype.toJSON = function () {
+    const values = { ...this.get() };
+    delete values.password; // never send the hash to the frontend
+    return values;
+  };
 
-User.beforeUpdate(async(user)=>{
-  if(user.changed('password')){
-    user.password = await bcrypt.hash(user.password ,10)
-  }
-});
-
-User.prototype.comparePassword = function (plainPassword) {
-  return bcrypt.compare(plainPassword, this.password);
+  return User;   // ← now at the correct level: inside module.exports, outside any hook callback
 };
-
-User.prototype.toJSON = function () {
-  const values = { ...this.get() };
-  delete values.password; // never send the hash to the frontend
-  return values;
-};
-
-
-  return User;
-})};
-
