@@ -60,5 +60,5 @@ User.prototype.toJSON = function () {
 
 
   return User;
-};
+})};
 
