@@ -4,6 +4,7 @@ import Signup from "./pages/auth/Signup"
 import Home from "./pages/Home"
 import Forgotpassword from "./pages/auth/Forgotpassword"
 import AdminDash from "./pages/AdminDash"
+import Staffdash from "./pages/Staffdash"
 import {  Route , Routes } from "react-router-dom"
 
 import './App.css'
@@ -16,6 +17,7 @@ function App() {
       <Route path="/" element={<Home/>}/>
       <Route path="/Signup" element={<Signup/>}/>
       <Route path="/Login" element={<Login/>}/>
+      <Route path="/Staffdash" element={<Staffdash/>}/>
       <Route path="/Forgotpassword" element={<Forgotpassword/>}/>
       <Route path="/AdminDash" element={<AdminDash/>}/>
      </Routes>  
