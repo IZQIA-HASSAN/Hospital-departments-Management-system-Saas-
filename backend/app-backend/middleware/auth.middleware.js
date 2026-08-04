@@ -18,4 +18,16 @@ const requireauth = async (req, res, next) => {
     }
 };
 
-export { requireauth };
+// require role 
+
+const requirerole = async(...allowedRoles)=>{
+    return (req, res, next)=>{
+        if(!req.user) return res.status(401).json({message : "not authenticated"})
+        if(!allowedRoles.includes(req.user.role)){
+            return res.status(403).json({message : "you donot have permission to access this "})
+        }    
+        next()
+    }
+}
+
+export { requireauth , requirerole };

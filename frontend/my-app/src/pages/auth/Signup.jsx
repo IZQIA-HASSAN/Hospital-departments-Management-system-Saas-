@@ -4,9 +4,12 @@ import gsap from "gsap";
 import { useMutation } from "@tanstack/react-query";
 import { Eye, EyeOff, ArrowRight, Check } from "lucide-react";
 
+// NOTE: id must match exactly what your backend expects for the `role` field.
+// Previously this was { id: "manager", label: "Admin" } which meant clicking
+// "Admin" sent role: "manager" to the server — fixed to "admin" below.
 const ROLES = [
   { id: "staff", label: "Staff" },
-  { id: "manager", label: "Admin" },
+  { id: "admin", label: "Admin" },
 ];
 
 const STEPS_PREVIEW = [
@@ -19,7 +22,7 @@ const STEPS_PREVIEW = [
 const API_URL = "http://localhost:5000/api";
 
 const signupuser = async (payload) => {
-  const res = await fetch(`${API_URL}/auth/signup`, {
+  const res = await fetch(`${API_URL}/auth/signup/staff`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
@@ -40,6 +43,7 @@ export default function Signup() {
 
   const [form, setForm] = useState({
     name: "",
+    title: "",
     email: "",
     password: ""
   });
@@ -60,7 +64,8 @@ export default function Signup() {
   const handleSubmit = (e) => {
     e.preventDefault();
     mutate({
-      name: `${form.name}`,
+      name: form.name,
+      title: form.title,
       email: form.email,
       password: form.password,
       role,
@@ -179,6 +184,7 @@ export default function Signup() {
                     key={r.id}
                     type="button"
                     onClick={() => setRole(r.id)}
+                    aria-pressed={role === r.id}
                     className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm border transition-colors ${role === r.id
                         ? "bg-emerald-700 border-emerald-700 text-neutral-50"
                         : "border-neutral-300 text-neutral-600 hover:border-neutral-400"
@@ -193,7 +199,7 @@ export default function Signup() {
 
             <div className="auth-field grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="firstName" className="font-mono text-xs tracking-wide text-neutral-500">
+                <label htmlFor="name" className="font-mono text-xs tracking-wide text-neutral-500">
                   FULL NAME
                 </label>
                 <input
@@ -206,7 +212,21 @@ export default function Signup() {
                   className="bg-transparent border-b border-neutral-300 py-2.5 text-[0.98rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
                 />
               </div>
-             
+
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="title" className="font-mono text-xs tracking-wide text-neutral-500">
+                  TITLE
+                </label>
+                <input
+                  id="title"
+                  type="text"
+                  value={form.title}
+                  onChange={handlechange}
+                  required
+                  placeholder="Charge Nurse"
+                  className="bg-transparent border-b border-neutral-300 py-2.5 text-[0.98rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
+                />
+              </div>
             </div>
 
             <div className="auth-field flex flex-col gap-1.5">
