@@ -1,140 +1,662 @@
-# Patient Management Dashboard
+# 🏥 Hospital Management System (HMS)
 
-A role-based dashboard for managing hospital patients across departments (ICU, OPD, and more), tracking vitals, and managing staff — with weekly/monthly analytics.
+A modern, role-based Hospital Management System built to streamline hospital operations, improve patient care, and centralize medical records. The application is designed as a real-world Hospital Information System (HIS) where each department works independently while sharing patient information through a centralized database.
 
-## Features
+---
 
-- **Authentication & Roles** — Admin, Doctor, and Staff roles with role-based access control
-- **Patient Management** — Register patients, assign to departments, view/edit records
-- **Vitals Tracking** — Log and view patient vitals (heart rate, blood pressure, temperature, oxygen level) over time
-- **Team Management** — Admins can add/remove staff and assign them to departments
-- **Analytics Dashboard** — Weekly and monthly charts for patient counts, department load, and vitals trends
+# 📌 Project Vision
 
-## Tech Stack
+The goal of this project is to simulate a production-level hospital management platform used by hospitals to manage patients, staff, appointments, admissions, ICU monitoring, billing, and medical records.
 
-**Frontend**
-- React (Vite)
-- Zustand — auth/session & UI state
-- TanStack Query (React Query) — server data fetching/caching
-- Tailwind CSS — styling
-- Recharts — charts
-- Zod — form validation
+Instead of building a simple CRUD application, this project focuses on solving real hospital workflows through proper database design, role-based access control, and department-specific dashboards.
 
-**Backend**
-- Node.js + Express — REST API
-- PostgreSQL + Prisma — database & ORM
-- JWT + bcrypt — authentication
+---
 
-## Project Structure
+# 🎯 Objectives
 
-```
-├── client/                 # React frontend
-│   ├── src/
-│   │   ├── api/            # axios instance + endpoint functions
-│   │   ├── store/           # zustand stores
-│   │   ├── hooks/            # react-query hooks
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── layouts/
-│   │   └── routes/
-│   └── ...
-├── server/                 # Express backend
-│   ├── src/
-│   │   ├── routes/
-│   │   ├── controllers/
-│   │   ├── middleware/       # auth, role checks
-│   │   ├── prisma/            # schema.prisma, migrations
-│   │   └── utils/
-│   └── ...
-└── README.md
-```
+* Manage patients from registration to discharge.
+* Centralize patient medical records.
+* Reduce paperwork and duplicate records.
+* Enable departments to collaborate efficiently.
+* Provide secure access based on user roles.
+* Maintain complete audit history of every important action.
+* Generate reports for hospital administration.
 
-## Getting Started
+---
 
-### Prerequisites
-- Node.js (v18+)
-- PostgreSQL (local instance or a hosted DB like Neon/Supabase)
-- npm or yarn
+# 👥 User Roles
 
-### 1. Clone the repository
-```bash
-git clone <repo-url>
-cd <project-folder>
-```
+## Super Admin
 
-### 2. Backend setup
-```bash
-cd server
-npm install
-```
+Responsible for managing the entire system.
 
-Create a `.env` file in `server/`:
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/patient_dashboard"
-JWT_SECRET="your-secret-key"
-JWT_REFRESH_SECRET="your-refresh-secret-key"
-PORT=5000
-```
+### Permissions
 
-Run Prisma migrations:
-```bash
-npx prisma migrate dev
-```
+* Manage hospitals (optional SaaS version)
+* Manage departments
+* Create administrators
+* Configure system settings
+* View analytics
+* Access audit logs
+* Monitor overall system activity
 
-Start the backend:
-```bash
-npm run dev
-```
+---
 
-### 3. Frontend setup
-```bash
-cd client
-npm install
-```
+## Hospital Admin
 
-Create a `.env` file in `client/`:
-```env
-VITE_API_BASE_URL=http://localhost:5000/api
-```
+Responsible for managing one hospital.
 
-Start the frontend:
-```bash
-npm run dev
-```
+### Permissions
 
-The app should now be running at `http://localhost:5173` (frontend) with the API at `http://localhost:5000` (backend).
+* Register staff
+* Manage departments
+* Assign user roles
+* Manage doctors
+* Manage nurses
+* View hospital reports
+* Manage beds
+* Manage inventory
+* View patient statistics
 
-## API Overview
+---
 
-| Endpoint | Description |
-|---|---|
-| `POST /api/auth/login` | Login |
-| `POST /api/auth/register` | Register a staff account (admin only) |
-| `GET /api/patients` | List patients (filterable by department/status) |
-| `POST /api/patients` | Register a new patient |
-| `POST /api/vitals/:patientId` | Add a vital reading |
-| `GET /api/vitals/:patientId/stats` | Weekly/monthly vitals stats |
-| `GET /api/team` | List team members |
-| `POST /api/team` | Add a team member (admin only) |
-| `GET /api/analytics/overview` | Dashboard summary stats |
+## Receptionist
 
-Full API details are documented in [`project-plan-patient-dashboard.md`](./project-plan-patient-dashboard.md).
+Responsible for patient registration.
 
-## Roles
+### Permissions
 
-| Role | Permissions |
-|---|---|
-| **Admin** | Full access — manage team, departments, patients, vitals |
-| **Doctor** | Manage patients & vitals within assigned department |
-| **Staff** | Register patients, log vitals within assigned department |
+* Register new patients
+* Search existing patients
+* Book appointments
+* Generate OPD tokens
+* Check patients in
+* Generate bills
 
-## Roadmap
+---
 
-- [ ] Real-time vitals (WebSocket-based live ICU monitoring)
-- [ ] Additional departments beyond ICU/OPD
-- [ ] Patient discharge history/archive view
-- [ ] Export analytics reports (PDF/CSV)
+## Doctor
 
-## License
+Responsible for patient diagnosis and treatment.
 
-Add your license here (e.g., MIT).
+### Permissions
+
+* View assigned patients
+* View patient history
+* Record diagnosis
+* Prescribe medicines
+* Request laboratory tests
+* Approve admissions
+* Discharge patients
+* Write clinical notes
+
+---
+
+## Nurse
+
+Responsible for patient monitoring.
+
+### Permissions
+
+* Record vital signs
+* Update patient condition
+* Administer medication
+* Record nursing notes
+* Monitor ICU patients
+* Complete shift reports
+
+---
+
+## Laboratory Staff
+
+### Permissions
+
+* Receive laboratory requests
+* Perform laboratory tests
+* Upload reports
+* Notify doctors when reports are ready
+
+---
+
+## Pharmacist
+
+### Permissions
+
+* View prescriptions
+* Dispense medicines
+* Update medicine inventory
+* Track stock availability
+
+---
+
+# 🏥 Core Modules
+
+---
+
+## Authentication
+
+* Login
+* Logout
+* JWT Authentication
+* Role-Based Authorization
+* Password Reset
+* Protected Routes
+
+---
+
+## Dashboard
+
+Each role has its own dashboard displaying relevant information.
+
+### Example Widgets
+
+* Today's Patients
+* Admissions
+* Discharges
+* ICU Occupancy
+* Revenue
+* Pending Bills
+* Upcoming Appointments
+* Doctor Availability
+* Bed Availability
+
+Charts include:
+
+* Patient Trends
+* Revenue Reports
+* Admissions
+* Department Performance
+* Bed Occupancy
+
+---
+
+# Patient Management
+
+The patient module acts as the heart of the system.
+
+## Patient Information
+
+* Medical Record Number (MRN)
+* Name
+* Age
+* Gender
+* Blood Group
+* CNIC
+* Phone Number
+* Address
+* Emergency Contact
+* Insurance Information
+
+---
+
+## Medical Information
+
+* Allergies
+* Chronic Diseases
+* Current Medications
+* Previous Surgeries
+* Family History
+
+---
+
+## Patient Timeline
+
+Every patient has a complete medical timeline.
+
+Example:
+
+Patient Registered
+
+↓
+
+OPD Consultation
+
+↓
+
+Blood Test
+
+↓
+
+Hospital Admission
+
+↓
+
+Transferred to ICU
+
+↓
+
+Recovered
+
+↓
+
+Discharged
+
+This provides doctors with a complete history instead of isolated records.
+
+---
+
+# OPD Module
+
+Workflow:
+
+Patient Registration
+
+↓
+
+Token Generation
+
+↓
+
+Doctor Assignment
+
+↓
+
+Vitals Recording
+
+↓
+
+Doctor Consultation
+
+↓
+
+Prescription
+
+↓
+
+Billing
+
+↓
+
+Visit Completed
+
+---
+
+## Recorded Information
+
+* Blood Pressure
+* Pulse
+* Temperature
+* Respiratory Rate
+* Weight
+* Height
+* Symptoms
+* Diagnosis
+* Prescription
+
+---
+
+# ICU Management
+
+The ICU module is one of the most advanced parts of the application.
+
+## ICU Dashboard
+
+Displays:
+
+* ICU Beds
+* Occupied Beds
+* Available Beds
+* Critical Patients
+* Ventilator Usage
+* Doctors On Duty
+* Nurses On Shift
+
+---
+
+## ICU Patient Monitoring
+
+Each ICU patient includes:
+
+* Room Number
+* Bed Number
+* Ventilator Status
+* Oxygen Support
+* Heart Rate
+* Pulse
+* Blood Pressure
+* Temperature
+* Respiratory Rate
+* Oxygen Saturation (SpO₂)
+* Urine Output
+* Glasgow Coma Scale (GCS)
+
+---
+
+## Vitals History
+
+Instead of only showing the latest values, every reading is stored.
+
+Example:
+
+08:00 AM
+
+↓
+
+09:00 AM
+
+↓
+
+10:00 AM
+
+↓
+
+11:00 AM
+
+Each vital sign can be displayed as a trend graph.
+
+---
+
+## Medication Administration
+
+Medication schedules include:
+
+* Medicine Name
+* Dosage
+* Time
+* Administered By
+* Status
+* Timestamp
+
+---
+
+## Doctor Notes
+
+Doctors can write clinical observations and treatment plans.
+
+---
+
+## Nursing Notes
+
+Nurses can record shift updates, patient conditions, medication observations, and daily progress.
+
+---
+
+# IPD (Inpatient Department)
+
+Manage admitted patients.
+
+Features:
+
+* Admission
+* Room Assignment
+* Bed Assignment
+* Daily Progress
+* Ward Transfers
+* Discharge Summary
+
+---
+
+# Laboratory
+
+Doctors can request tests.
+
+Examples:
+
+* CBC
+* LFT
+* MRI
+* CT Scan
+* X-Ray
+* Ultrasound
+
+Workflow:
+
+Doctor Request
+
+↓
+
+Laboratory Processing
+
+↓
+
+Result Upload
+
+↓
+
+Doctor Notification
+
+---
+
+# Pharmacy
+
+Features:
+
+* Medicine Inventory
+* Prescription Management
+* Stock Updates
+* Low Stock Alerts
+* Medicine Dispensing
+
+---
+
+# Billing
+
+Automatically calculate:
+
+* Consultation Fees
+* Admission Charges
+* ICU Charges
+* Ward Charges
+* Laboratory Charges
+* Pharmacy Charges
+* Procedure Charges
+
+Generate:
+
+* Invoice
+* Receipt
+* Payment History
+
+---
+
+# Staff Management
+
+Manage all hospital employees.
+
+Staff Profile includes:
+
+* Employee ID
+* Name
+* Photo
+* Department
+* Designation
+* Role
+* Contact Information
+* Shift
+* Joining Date
+
+---
+
+## Attendance
+
+Track:
+
+* Present
+* Absent
+* Late
+* Leave
+
+---
+
+# Bed Management
+
+Track every hospital bed.
+
+Statuses include:
+
+* Available
+* Occupied
+* Reserved
+* Cleaning
+* Maintenance
+
+---
+
+# Appointment Management
+
+Features:
+
+* Calendar View
+* Doctor Availability
+* Appointment Booking
+* Rescheduling
+* Cancellation
+* Token Generation
+
+---
+
+# Reports & Analytics
+
+Generate reports for:
+
+* Daily Admissions
+* Monthly Revenue
+* OPD Visits
+* ICU Occupancy
+* Department Performance
+* Laboratory Tests
+* Medicine Usage
+* Staff Performance
+
+---
+
+# Notifications
+
+Examples:
+
+* Medicine Due
+* Laboratory Report Ready
+* Critical Patient Alert
+* Appointment Reminder
+* Discharge Approved
+
+---
+
+# Audit Logs
+
+Every important action is tracked.
+
+Stored Information:
+
+* User
+* Action
+* Previous Value
+* New Value
+* Timestamp
+* IP Address
+
+Example:
+
+Doctor updated diagnosis
+
+↓
+
+Nurse recorded blood pressure
+
+↓
+
+Admin deleted user
+
+---
+
+# Database Modules
+
+Hospital
+
+├── Departments
+
+├── Roles
+
+├── Users
+
+├── Patients
+
+├── Appointments
+
+├── Admissions
+
+├── Beds
+
+├── ICU Records
+
+├── Vitals
+
+├── Diagnoses
+
+├── Prescriptions
+
+├── Laboratory Tests
+
+├── Pharmacy
+
+├── Billing
+
+├── Payments
+
+├── Notifications
+
+└── Audit Logs
+
+---
+
+# Technology Stack
+
+## Frontend
+
+* React
+* React Router
+* TanStack Query
+* React Hook Form
+* Zod
+* Tailwind CSS
+* Chart.js
+
+---
+
+## Backend
+
+* Express.js
+* Sequelize ORM
+* PostgreSQL
+* JWT Authentication
+* Multer
+* Bcrypt
+
+---
+
+# Future Enhancements
+
+* Real-Time ICU Monitoring (WebSockets)
+* SMS Notifications
+* Email Notifications
+* PDF Prescription Generation
+* PDF Discharge Summary
+* Barcode / QR Code Patient Wristbands
+* Electronic Medical Records (EMR)
+* Multi-Hospital Support
+* AI-Based Patient Risk Prediction
+* Voice Notes for Doctors
+* Mobile Companion Application
+
+---
+
+# ⭐ Standout Features
+
+* Complete Patient Timeline
+* Role-Based Dashboards
+* Department-Specific Workflows
+* Real-Time ICU Monitoring
+* Vitals Trend Graphs
+* Bed Management Dashboard
+* Audit Logging System
+* Automated Billing
+* Laboratory Workflow
+* Pharmacy Inventory Management
+* Secure Role-Based Access Control
+* Production-Level Relational Database Design
+
+---
+
+# Project Goal
+
+Build a production-ready Hospital Information System that demonstrates full-stack software engineering skills, including scalable architecture, relational database design, authentication, authorization, workflow automation, reporting, and healthcare-focused data management.
