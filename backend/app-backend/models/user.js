@@ -21,8 +21,15 @@ const User = sequelize.define("User", {
     defaultValue: "staff",
     allowNull: false,
   },
-  title: { type: DataTypes.STRING, allowNull: false }, // e.g. "HR Manager"
-}, {
+  title: { type: DataTypes.STRING, allowNull: false },
+  
+hospitalId:{
+type : DataTypes.UUID,
+allowNull : true ,
+}, // e.g. "HR Manager"
+},
+
+{
   tableName: "users",
   timestamps: true,
   hooks: {

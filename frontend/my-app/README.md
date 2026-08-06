@@ -1,4 +1,4 @@
-# 🏥 Hospital Management System (HMS)
+# Hospital Management System (HMS)
 
 A modern, role-based Hospital Management System built to streamline hospital operations, improve patient care, and centralize medical records. The application is designed as a real-world Hospital Information System (HIS) where each department works independently while sharing patient information through a centralized database.
 

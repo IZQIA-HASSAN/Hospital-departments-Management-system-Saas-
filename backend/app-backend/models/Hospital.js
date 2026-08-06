@@ -23,8 +23,13 @@ const Hospital = sequelize.define(
   }
 );
 
-// Associations
+// Associations , one hospital has only one admin for now 
 User.hasOne(Hospital, { foreignKey: "adminId", as: "hospital" });
 Hospital.belongsTo(User, { foreignKey: "adminId", as: "admin" });
+
+//  one hospital can have many staff members 
+
+Hospital.hasMany(User , {foriegnkey:"hospitalId" , as :"staff"})
+User.belongsTo(Hospital,{foriegnKey : "hospitalId" , as:"employer"})
 
 export default Hospital;
