@@ -12,7 +12,7 @@ app.use(express.json());
 
 
 app.use("/api/auth", authRoutes);
-app.use("/api/hospitals", hospitalRoutes);
+app.use("/api/hospitals", Hospitalroutes);
 
 sequelize
   .authenticate()

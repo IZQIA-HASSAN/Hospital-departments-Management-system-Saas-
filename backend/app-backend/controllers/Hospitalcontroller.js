@@ -1,4 +1,4 @@
-import {Hospital} from "../models/Hospital";
+import Hospital from "../models/Hospital.js";
 
 // port route api.hospital
 //  methof post
@@ -9,7 +9,7 @@ export const createhospital = async (req, res) => {
         if (!name || !address || !city || !phone) {
             return res.status(400).json({ message: "all fields are required , fill all" })
         }
-        const exisiting = await Hospital.findOne({ where: { adminId: req.user.id } })
+        const existing = await Hospital.findOne({ where: { adminId: req.user.id } })
 
         // check if hospital exists , if exist throw an error else 
         if (existing) {
