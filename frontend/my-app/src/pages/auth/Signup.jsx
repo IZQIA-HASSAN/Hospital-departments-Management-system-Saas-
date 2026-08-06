@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+
 import gsap from "gsap";
+import { useNavigate, Link } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
 import { Eye, EyeOff, ArrowRight, Check } from "lucide-react";
 
 const ROLES = [
   { id: "staff", label: "Staff" },
-  { id: "manager", label: "Admin" },
+  { id: "admin", label: "Admin" },
 ];
 
 const STEPS_PREVIEW = [
@@ -15,10 +17,47 @@ const STEPS_PREVIEW = [
 ];
 
 export default function Signup() {
+  const navigate = useNavigate();
+
   const rootRef = useRef(null);
   const pathRef = useRef(null);
   const [showPw, setShowPw] = useState(false);
-  const [role, setRole] = useState("staff");
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "staff",
+    title: "",
+  });
+
+  const onChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  // fetch + mutation here
+  const signup = useMutation({
+    mutationFn: async (formData) => {
+      const res = await fetch("http://localhost:5000/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "signup failed");
+      return data;
+    },
+    onSuccess: (data) => {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      navigate(data.user.role === "admin" ? "/Admindash" : "/Staffdash");
+    },
+  });
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+    signup.mutate(form);
+  };
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -54,11 +93,6 @@ export default function Signup() {
 
     return () => ctx.revert();
   }, []);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // wire up auth here
-  };
 
   return (
     <div ref={rootRef} className="min-h-screen grid lg:grid-cols-2 bg-neutral-50 text-neutral-900">
@@ -125,22 +159,27 @@ export default function Signup() {
             </Link>
           </p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-7">
+          {signup.isError && (
+            <p className="auth-field text-sm text-red-600 mb-4">{signup.error.message}</p>
+          )}
+
+          <form onSubmit={onSubmit} className="flex flex-col gap-7">
             <div className="auth-field flex flex-col gap-1.5">
               <span className="font-mono text-xs tracking-wide text-neutral-500">I'M JOINING AS</span>
+
               <div className="flex gap-2 mt-0.5">
                 {ROLES.map((r) => (
                   <button
                     key={r.id}
                     type="button"
-                    onClick={() => setRole(r.id)}
+                    onClick={() => setForm((prev) => ({ ...prev, role: r.id }))}
                     className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm border transition-colors ${
-                      role === r.id
+                      form.role === r.id
                         ? "bg-emerald-700 border-emerald-700 text-neutral-50"
                         : "border-neutral-300 text-neutral-600 hover:border-neutral-400"
                     }`}
                   >
-                    {role === r.id && <Check size={13} />}
+                    {form.role === r.id && <Check size={13} />}
                     {r.label}
                   </button>
                 ))}
@@ -149,26 +188,33 @@ export default function Signup() {
 
             <div className="auth-field grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="firstName" className="font-mono text-xs tracking-wide text-neutral-500">
-                  FIRST NAME
+                <label htmlFor="name" className="font-mono text-xs tracking-wide text-neutral-500">
+                  NAME
                 </label>
                 <input
-                  id="firstName"
+                  id="name"
                   type="text"
+                  name="name"
+                  value={form.name}
+                  onChange={onChange}
                   required
                   placeholder="Amara"
                   className="bg-transparent border-b border-neutral-300 py-2.5 text-[0.98rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
                 />
               </div>
+
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="lastName" className="font-mono text-xs tracking-wide text-neutral-500">
-                  LAST NAME
+                <label htmlFor="title" className="font-mono text-xs tracking-wide text-neutral-500">
+                  TITLE
                 </label>
                 <input
-                  id="lastName"
+                  id="title"
                   type="text"
+                  name="title"
+                  value={form.title}
+                  onChange={onChange}
                   required
-                  placeholder="Osei"
+                  placeholder="Ward Nurse"
                   className="bg-transparent border-b border-neutral-300 py-2.5 text-[0.98rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
                 />
               </div>
@@ -176,11 +222,14 @@ export default function Signup() {
 
             <div className="auth-field flex flex-col gap-1.5">
               <label htmlFor="email" className="font-mono text-xs tracking-wide text-neutral-500">
-                 EMAIL
+                EMAIL
               </label>
               <input
                 id="email"
                 type="email"
+                name="email"
+                value={form.email}
+                onChange={onChange}
                 required
                 placeholder="you@hospital.org"
                 className="bg-transparent border-b border-neutral-300 py-2.5 text-[0.98rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
@@ -196,6 +245,9 @@ export default function Signup() {
                   id="password"
                   type={showPw ? "text" : "password"}
                   required
+                  name="password"
+                  value={form.password}
+                  onChange={onChange}
                   minLength={8}
                   placeholder="At least 8 characters"
                   className="w-full bg-transparent border-b border-neutral-300 py-2.5 pr-8 text-[0.98rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
@@ -219,9 +271,10 @@ export default function Signup() {
 
             <button
               type="submit"
-              className="auth-field group bg-emerald-700 text-neutral-50 px-7 py-3.5 rounded-full text-sm font-medium flex items-center justify-center gap-2 hover:bg-emerald-800 transition-colors"
+              disabled={signup.isPending}
+              className="auth-field group bg-emerald-700 text-neutral-50 px-7 py-3.5 rounded-full text-sm font-medium flex items-center justify-center gap-2 hover:bg-emerald-800 transition-colors disabled:opacity-60"
             >
-              Create account
+              {signup.isPending ? "Creating account..." : "Sign Up"}
               <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
             </button>
           </form>

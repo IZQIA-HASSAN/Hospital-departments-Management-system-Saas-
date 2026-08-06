@@ -1,25 +1,23 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
-import db from "./models/index.js";
-const { sequelize } = db;
+import sequelize from "./config/db.js";
+import authRoutes from "./routes/authRoutes.js";
+import Hospitalroutes from "./routes/Hospitalroutes.js"
 
-
-dotenv.config();
 const app = express();
-const PORT = process.env.PORT
-
-app.use(cors());
+app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 
 
 
-app.get("/api/health" , (req, res)=>{
-    req.json({status:"ok" , messgage : "backend is running"})
-})
+app.use("/api/auth", authRoutes);
+app.use("/api/hospitals", hospitalRoutes);
 
-sequelize.authenticate().then(()=> console.log("postgres connected via sequelize")).catch(err=> console.log("unable to connect" ,err))
-
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+sequelize
+  .authenticate()
+  .then(() => {
+    console.log("Postgres connected");
+    app.listen(process.env.PORT, () => console.log(`Server running on ${process.env.PORT}`));
+  })
+  .catch((err) => console.error("DB connection failed:", err));

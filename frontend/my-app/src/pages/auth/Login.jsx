@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
 
 const SHIFTS = [
   { id: "01", name: "Dr. R. Khan", time: "07:00–15:00", ward: "ICU" },
@@ -13,6 +14,40 @@ export default function Login() {
   const rootRef = useRef(null);
   const pathRef = useRef(null);
   const [showPw, setShowPw] = useState(false);
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
+
+  const navigate = useNavigate();
+
+  const onChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  // fetch call + mutation
+  const login = useMutation({
+    mutationFn: async (formData) => {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Login failed");
+      return data;
+    },
+    onSuccess: (data) => {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      navigate(data.user.role === "admin" ? "/Admindash" : "/Staffdash");
+    },
+  });
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+    login.mutate(form);
+  };
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -48,11 +83,6 @@ export default function Login() {
 
     return () => ctx.revert();
   }, []);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // wire up auth here
-  };
 
   return (
     <div ref={rootRef} className="min-h-screen grid lg:grid-cols-2 bg-neutral-50 text-neutral-900">
@@ -114,12 +144,16 @@ export default function Login() {
           <h2 className="font-serif font-semibold text-3xl sm:text-4xl mb-2">Welcome back.</h2>
           <p className="text-sm opacity-60 mb-10">
             New to Round?{" "}
-            <Link to="/signup" className="text-emerald-700 font-medium hover:underline">
+            <Link to="/Signup" className="text-emerald-700 font-medium hover:underline">
               Create an account
             </Link>
           </p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-7">
+          {login.isError && (
+            <p className="auth-field text-sm text-red-600 mb-4">{login.error.message}</p>
+          )}
+
+          <form onSubmit={onSubmit} className="flex flex-col gap-7">
             <div className="auth-field flex flex-col gap-1.5">
               <label htmlFor="email" className="font-mono text-xs tracking-wide text-neutral-500">
                 WORK EMAIL
@@ -127,6 +161,9 @@ export default function Login() {
               <input
                 id="email"
                 type="email"
+                name="email"
+                value={form.email}
+                onChange={onChange}
                 required
                 placeholder="you@hospital.org"
                 className="bg-transparent border-b border-neutral-300 py-2.5 text-[0.98rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
@@ -147,6 +184,9 @@ export default function Login() {
                   id="password"
                   type={showPw ? "text" : "password"}
                   required
+                  name="password"
+                  value={form.password}
+                  onChange={onChange}
                   placeholder="••••••••"
                   className="w-full bg-transparent border-b border-neutral-300 py-2.5 pr-8 text-[0.98rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
                 />
@@ -168,9 +208,10 @@ export default function Login() {
 
             <button
               type="submit"
-              className="auth-field group bg-emerald-700 text-neutral-50 px-7 py-3.5 rounded-full text-sm font-medium flex items-center justify-center gap-2 hover:bg-emerald-800 transition-colors"
+              disabled={login.isPending}
+              className="auth-field group bg-emerald-700 text-neutral-50 px-7 py-3.5 rounded-full text-sm font-medium flex items-center justify-center gap-2 hover:bg-emerald-800 transition-colors disabled:opacity-60"
             >
-              Sign in
+              {login.isPending ? "Logging in..." : "Log In"}
               <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
             </button>
           </form>
