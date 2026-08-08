@@ -11,6 +11,8 @@ import {
   X,
   Building2,
 } from "lucide-react";
+// ADDED: import the Staff component
+import Staff from "./Staff";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -340,14 +342,10 @@ export default function Admindash() {
             </>
           )}
 
-          {active === "staff" && (
-            <div className="border border-dashed border-neutral-300 rounded-xl p-10 text-center bg-white">
-              <p className="font-serif text-xl mb-1">No staff yet</p>
-              <p className="text-sm opacity-60">
-                Staff accounts created via sign up will show up here.
-              </p>
-            </div>
-          )}
+          {/* CHANGED: was a static "No staff yet" placeholder block — now
+              renders the real Staff component (list, add, delete, live
+              online/offline status). */}
+          {active === "staff" && <Staff />}
 
           {active === "shifts" && (
             <div className="border border-dashed border-neutral-300 rounded-xl p-10 text-center bg-white">
