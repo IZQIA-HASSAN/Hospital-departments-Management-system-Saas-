@@ -28,7 +28,7 @@ import generateToken from "../utils/generateToken.js";
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
-    console.log("unable to create user , issues ")
+    console.log("unable to create user , issues " , err.message)
   }
 };
 
