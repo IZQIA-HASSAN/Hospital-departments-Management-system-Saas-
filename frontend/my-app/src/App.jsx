@@ -6,6 +6,8 @@ import Forgotpassword from "./pages/auth/Forgotpassword"
 import {  Route , Routes } from "react-router-dom"
 import Staffdash from "./pages/Dashboards/Staff/Staffdash"
 import Admindash from "./pages/Dashboards/Admin/Admindash"
+import InviteSent from "./pages/verifications/InviteSent"
+import StaffSignup from "./pages/verifications/StaffSignup"
 
 import './App.css'
 
@@ -20,6 +22,8 @@ function App() {
       <Route path="/Staffdash" element={<Staffdash/>}/>
       <Route path="/Admindash" element={<Admindash/>}/>
       <Route path="/Forgotpassword" element={<Forgotpassword/>}/>
+      <Route path="/invite-sent" element={<InviteSent/>}/>
+      <Route path="/staff-signup" element={<StaffSignup/>}/>
      </Routes>
   
   )

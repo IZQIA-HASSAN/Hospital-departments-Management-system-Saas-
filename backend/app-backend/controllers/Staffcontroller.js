@@ -1,5 +1,7 @@
 import bcrypt from 'bcryptjs';
 import Staff from '../models/Staff.js';
+import jwt from "jsonwebtoken";
+import { sendEmail } from "../utils/sendEmail.js";
 
 // creating staff member
 export const addstaff = async (req, res) => {
@@ -84,3 +86,40 @@ export const delstaff = async (req, res) => {
 // default export) while Staffroutes.js used a NAMED import — that mismatch
 // was the exact crash in your error log. Switched every function above to
 // a named export (`export const ...`) so the named import now resolves.
+
+
+export const invitestaff =async (req , res)=>{
+  try{
+    const {email} = req.body
+
+    const adminhospitalid = req.user.hospitalId;
+    if (!email) return res.status(400).json({message : "email is required"})
+
+      const token  = jwt.sign({
+        email  , hospitalId :adminhospitalid , role : "staff"
+      },
+    process.env.JWT_INVITE_SECRET,
+    {expiresIn : '3d'}
+    );
+  
+
+    const link = `${process.env.FRONTEND_URL}/staff-signup?token=${token}`;
+
+    await sendEmail({
+      to :email,
+      subject : "you are invited to join as staff",
+      html:
+      `
+      <p>You have been invited to joinas a staff member </p>
+      <p><a href="${link}">Click here to complete your signup !</a></p>
+      <p>this link expires in 3days</p>
+      `
+    })
+
+    res.status(200).json({message : "invite sent successfully"})
+    console.log("a staff member has been invited" )
+  }catch(err){
+console.log(err)
+res.status(500).json({ message: "Failed to send invite" });
+  }
+}

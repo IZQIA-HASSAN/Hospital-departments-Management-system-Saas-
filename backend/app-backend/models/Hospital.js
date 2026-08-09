@@ -29,7 +29,7 @@ Hospital.belongsTo(User, { foreignKey: "adminId", as: "admin" });
 
 //  one hospital can have many staff members 
 
-Hospital.hasMany(User , {foriegnkey:"hospitalId" , as :"staff"})
-User.belongsTo(Hospital,{foriegnKey : "hospitalId" , as:"employer"})
+Hospital.hasMany(User , {foreignKey:"hospitalId" , as :"staff"})
+User.belongsTo(Hospital,{foreignKey : "hospitalId" , as:"employer"})
 
 export default Hospital;

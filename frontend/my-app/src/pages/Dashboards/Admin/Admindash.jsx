@@ -26,6 +26,7 @@ export default function Admindash() {
   const queryClient = useQueryClient();
   const [active, setActive] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
 
   // boolean: is the create-hospital form currently showing
   const [showhospitalform, setShowHospitalForm] = useState(false);
@@ -60,7 +61,7 @@ export default function Admindash() {
       if (!res.ok) throw new Error(data.message || "Failed to load hospital");
       return data.hospital;
     },
-     staleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   const onChange = (e) => {
@@ -87,6 +88,32 @@ export default function Admindash() {
       queryClient.invalidateQueries({ queryKey: ["myhospital"] });
     },
   });
+
+  // inviting staff member 
+
+  const inviteStaffMutation = useMutation({
+    mutationFn: async (email) => {
+      const res = await fetch("http://localhost:5000/api/staff/invite", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to send invite");
+      return data;
+    },
+    onSuccess: () => {
+      navigate("/invite-sent", { state: { email: inviteEmail } });
+    },
+  });
+
+  const onInviteSubmit = (e) => {
+    e.preventDefault();
+    inviteStaffMutation.mutate(inviteEmail);
+  };
 
   const onHospitalSubmit = (e) => {
     e.preventDefault();
@@ -117,9 +144,8 @@ export default function Admindash() {
 
       {/* Sidebar */}
       <aside
-        className={`${
-          sidebarOpen ? "flex" : "hidden"
-        } lg:flex flex-col justify-between bg-emerald-950 text-neutral-50 px-5 py-8 lg:min-h-screen`}
+        className={`${sidebarOpen ? "flex" : "hidden"
+          } lg:flex flex-col justify-between bg-emerald-950 text-neutral-50 px-5 py-8 lg:min-h-screen`}
       >
         <div>
           <span className="hidden lg:block font-serif font-bold text-xl mb-10 px-2">
@@ -141,11 +167,10 @@ export default function Admindash() {
                     setActive(item.id);
                     setSidebarOpen(false);
                   }}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ${
-                    isActive
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ${isActive
                       ? "bg-emerald-800 text-neutral-50"
                       : "text-emerald-100/70 hover:bg-emerald-900 hover:text-neutral-50"
-                  }`}
+                    }`}
                 >
                   <Icon size={17} />
                   {item.label}
@@ -345,7 +370,37 @@ export default function Admindash() {
           {/* CHANGED: was a static "No staff yet" placeholder block — now
               renders the real Staff component (list, add, delete, live
               online/offline status). */}
-          {active === "staff" && <Staff />}
+          {active === "staff" && (
+              <>
+    <div className="border border-neutral-200 rounded-xl p-6 bg-white mb-6">
+      <p className="font-serif text-lg font-semibold mb-4">Invite a staff member</p>
+
+      {inviteStaffMutation.isError && (
+        <p className="text-sm text-red-600 mb-3">{inviteStaffMutation.error.message}</p>
+      )}
+
+      <form onSubmit={onInviteSubmit} className="flex flex-col sm:flex-row gap-3">
+        <input
+          type="email"
+          required
+          value={inviteEmail}
+          onChange={(e) => setInviteEmail(e.target.value)}
+          placeholder="staff@example.com"
+          className="flex-1 bg-transparent border-b border-neutral-300 py-2 text-[0.95rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
+        />
+        <button
+          type="submit"
+          disabled={inviteStaffMutation.isPending}
+          className="bg-emerald-700 text-neutral-50 px-6 py-2.5 rounded-full text-sm font-medium hover:bg-emerald-800 transition-colors disabled:opacity-60 whitespace-nowrap"
+        >
+          {inviteStaffMutation.isPending ? "Sending…" : "Send Invite"}
+        </button>
+      </form>
+    </div>
+
+    <Staff />
+  </>
+          )}
 
           {active === "shifts" && (
             <div className="border border-dashed border-neutral-300 rounded-xl p-10 text-center bg-white">

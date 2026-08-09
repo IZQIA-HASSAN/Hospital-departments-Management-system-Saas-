@@ -3,13 +3,13 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.addColumn('Users', 'hospitalId', {
-      type: Sequelize.INTEGER, // match your model's type
+    await queryInterface.addColumn('users', 'hospitalId', {
+      type: Sequelize.UUID,
       allowNull: true,
-      references: { model: 'hospitals', key: 'id' }, // if it's a foreign key
+      references: { model: 'hospitals', key: 'id' },
     });
   },
   down: async (queryInterface) => {
-    await queryInterface.removeColumn('Users', 'hospitalId');
+    await queryInterface.removeColumn('users', 'hospitalId');
   }
 };

@@ -1,4 +1,9 @@
 import express from 'express';
+import {invitestaff} from '../controllers/Staffcontroller.js'
+import { signupStaff } from '../controllers/authController.js';
+import { verifyInvite } from '../controllers/authController.js';
+import { protect } from "../middleware/auth.js";
+import { authorize } from '../middleware/checkrole.js';
 
 const router = express.Router();
 
@@ -19,4 +24,13 @@ router.delete('/:id', delstaff);
 
 // FIX: `module.exports = router` was CommonJS syntax in an ESM file —
 // this is what Node's ESM loader would choke on next.
+
+
+router.post("/invite" , protect , authorize("admin") , invitestaff)
+
+router.get("/verify-invite", verifyInvite);
+
+router.post("/signup-staff", signupStaff);
+
+
 export default router;
