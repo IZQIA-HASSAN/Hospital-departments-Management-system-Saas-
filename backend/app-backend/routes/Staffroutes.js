@@ -4,6 +4,7 @@ import { signupStaff } from '../controllers/authController.js';
 import { verifyInvite } from '../controllers/authController.js';
 import { protect } from "../middleware/auth.js";
 import { authorize } from '../middleware/checkrole.js';
+import { stafflogin } from '../controllers/authController.js';
 
 const router = express.Router();
 
@@ -31,6 +32,8 @@ router.post("/invite" , protect , authorize("admin") , invitestaff)
 router.get("/verify-invite", verifyInvite);
 
 router.post("/signup-staff", signupStaff);
+
+router.post("/login" , stafflogin)
 
 
 export default router;

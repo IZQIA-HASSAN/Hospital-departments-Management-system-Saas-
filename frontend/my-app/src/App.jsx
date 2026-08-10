@@ -8,6 +8,7 @@ import Staffdash from "./pages/Dashboards/Staff/Staffdash"
 import Admindash from "./pages/Dashboards/Admin/Admindash"
 import InviteSent from "./pages/verifications/InviteSent"
 import StaffSignup from "./pages/verifications/StaffSignup"
+import StaffLogin from "./pages/verifications/Stafflogin"
 
 import './App.css'
 
@@ -24,6 +25,7 @@ function App() {
       <Route path="/Forgotpassword" element={<Forgotpassword/>}/>
       <Route path="/invite-sent" element={<InviteSent/>}/>
       <Route path="/staff-signup" element={<StaffSignup/>}/>
+      <Route path="/staff-login" element={<StaffLogin/>}/>
      </Routes>
   
   )

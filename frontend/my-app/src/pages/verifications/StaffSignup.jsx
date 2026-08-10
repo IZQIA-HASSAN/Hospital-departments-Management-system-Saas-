@@ -81,7 +81,7 @@ function StaffSignup() {
         setError(data.message || "Signup failed");
         return;
       }
-      navigate("/login");
+      navigate("/Stafflogin");
     } finally {
       setSubmitting(false);
     }
