@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 
  export const signup = async (req, res) => {
   try {
@@ -69,7 +70,7 @@ export const verifyInvite = async (req, res) => {
 // signup handle for staff
 export const signupStaff = async (req, res) => {
   try {
-    const { token, password, name } = req.body;
+    const { token, password, name , title } = req.body;
     const decoded = jwt.verify(token, process.env.JWT_INVITE_SECRET); // throws if invalid/expired
 
     const existing = await User.findOne({ where: { email: decoded.email } });
@@ -79,6 +80,7 @@ export const signupStaff = async (req, res) => {
 
     const user = await User.create({
       name,
+      title,
       email: decoded.email,
       password: hashedPassword,
       role: decoded.role,        // "staff" — from token, not client input
@@ -86,7 +88,11 @@ export const signupStaff = async (req, res) => {
     });
 
     res.status(201).json({ message: "Signup successful", user });
-  } catch (err) {
-    res.status(400).json({ message: "Invalid or expired invite link" });
+  }  catch (err) {
+    console.error("signupStaff error:", err); // <-- see the real cause in your server logs
+    if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
+      return res.status(400).json({ message: "Invalid or expired invite link" });
+    }
+    return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };

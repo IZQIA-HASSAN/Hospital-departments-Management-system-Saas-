@@ -30,6 +30,7 @@ export const addstaff = async (req, res) => {
       passwordHash,
       role: role || 'staff',
     });
+    
 
     // broadcasting to any active admin in dashboard, using websocket concept here
     const io = req.app.get('io');
@@ -40,6 +41,7 @@ export const addstaff = async (req, res) => {
     res.status(201).json(safeStaff);
   } catch (err) {
     res.status(500).json({ error: err.message });
+    console.log(err.message)
   }
 };
 
