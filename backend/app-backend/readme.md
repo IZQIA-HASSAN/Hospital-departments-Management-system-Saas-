@@ -7,3 +7,5 @@ some features need to be checked
 2. cahcing  in app 
 3. rate limiting 
 4. indexing in database as the app grows 
+
+ code reviewed and wokring on solutions for the problems that are going to occur 
