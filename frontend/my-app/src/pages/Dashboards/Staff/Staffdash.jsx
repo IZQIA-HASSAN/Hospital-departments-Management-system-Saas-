@@ -2,7 +2,7 @@ import React from 'react'
 
 const Staffdash = () => {
   return (
-    <div>Staffdash</div>
+    <div>this is Staff dashboard</div>
   )
 }
 
