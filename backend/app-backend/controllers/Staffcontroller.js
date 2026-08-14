@@ -58,6 +58,7 @@ export const getstaff = async (req, res) => {
         ['name', 'ASC'],
       ],
     });
+    console.log("staff user has been fetched")
     res.json(staff);
   } catch (err) {
     res.status(500).json({ error: err.message });

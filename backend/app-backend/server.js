@@ -34,9 +34,12 @@ sequelize
   .authenticate()
   .then(() => {
     console.log("Postgres connected");
-    
+    return sequelize.sync(); // ADD THIS — creates any missing tables from your models
+  })
+  .then(() => {
+    console.log("Models synced");
     server.listen(process.env.PORT, () =>
       console.log(`Server running on ${process.env.PORT}`)
     );
   })
-  .catch((err) => console.error("DB connection failed:", err));
+  .catch((err) => console.error("DB connection/sync failed:", err));

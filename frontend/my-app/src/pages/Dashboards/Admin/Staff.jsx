@@ -142,7 +142,7 @@ export default function Staff() {
         >
           <UserPlus2 size={16} />
           Add Staff
-        </button>
+        </button> 
       </div>
 
       {(queryError || addMutation.isError || deleteMutation.isError) && (
@@ -153,7 +153,7 @@ export default function Staff() {
         </p>
       )}
 
-      {showAddForm && (
+       {showAddForm && (
         <form
           onSubmit={handleAddStaff}
           className="border border-neutral-200 rounded-xl p-6 bg-white mb-8 flex flex-col gap-5"
