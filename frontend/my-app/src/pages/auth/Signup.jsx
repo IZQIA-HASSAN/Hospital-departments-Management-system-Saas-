@@ -1,14 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 
 import gsap from "gsap";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { Eye, EyeOff, ArrowRight, Check } from "lucide-react";
-
-const ROLES = [
-  { id: "staff", label: "Staff" },
-  { id: "admin", label: "Admin" },
-];
 
 const STEPS_PREVIEW = [
   { id: "01", name: "T. Osei", time: "07:00–15:00", ward: "Peds" },
@@ -22,12 +17,14 @@ export default function Signup() {
   const rootRef = useRef(null);
   const pathRef = useRef(null);
   const [showPw, setShowPw] = useState(false);
+  const [searchParams] = useSearchParams();
+  const inviteToken = searchParams.get("token");
 
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
-    role: "staff",
+    role: inviteToken ? "staff" : "admin",
     title: "",
   });
 
@@ -38,10 +35,18 @@ export default function Signup() {
   // fetch + mutation here
   const signup = useMutation({
     mutationFn: async (formData) => {
-      const res = await fetch("http://localhost:5000/api/auth/signup", {
+      const endpoint = inviteToken
+        ? "http://localhost:5000/api/auth/staffsignup"
+        : "http://localhost:5000/api/auth/signup";
+
+      const payload = inviteToken
+        ? { ...formData, token: inviteToken }
+        : formData;
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "signup failed");
@@ -165,25 +170,22 @@ export default function Signup() {
 
           <form onSubmit={onSubmit} className="flex flex-col gap-7">
             <div className="auth-field flex flex-col gap-1.5">
-              <span className="font-mono text-xs tracking-wide text-neutral-500">I'M JOINING AS</span>
+              <span className="font-mono text-xs tracking-wide text-neutral-500">
+                {inviteToken ? "JOINING AS" : "CREATING ACCOUNT AS"}
+              </span>
 
               <div className="flex gap-2 mt-0.5">
-                {ROLES.map((r) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => setForm((prev) => ({ ...prev, role: r.id }))}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm border transition-colors ${
-                      form.role === r.id
-                        ? "bg-emerald-700 border-emerald-700 text-neutral-50"
-                        : "border-neutral-300 text-neutral-600 hover:border-neutral-400"
-                    }`}
-                  >
-                    {form.role === r.id && <Check size={13} />}
-                    {r.label}
-                  </button>
-                ))}
+                <span className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm bg-emerald-700 border border-emerald-700 text-neutral-50">
+                  <Check size={13} />
+                  {inviteToken ? "Staff" : "Admin"}
+                </span>
               </div>
+
+              {inviteToken && (
+                <p className="text-xs text-neutral-500 mt-1">
+                  You're joining via an invite — role is locked to Staff.
+                </p>
+              )}
             </div>
 
             <div className="auth-field grid grid-cols-2 gap-4">

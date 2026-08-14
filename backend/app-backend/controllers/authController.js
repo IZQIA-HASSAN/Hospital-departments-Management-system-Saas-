@@ -71,58 +71,92 @@ export const verifyInvite = async (req, res) => {
 export const signupStaff = async (req, res) => {
   try {
     const { token, password, name, title } = req.body;
-    const decoded = jwt.verify(token, process.env.JWT_INVITE_SECRET); // throws if invalid/expired
-
+ 
+    if (!token || !password || !name) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+ 
+    // 1. Verify + decode the invite token (throws if invalid/expired)
+    const decoded = jwt.verify(token, process.env.JWT_INVITE_SECRET);
+ 
+    // 2. Make sure this email hasn't already signed up
     const existing = await User.findOne({ where: { email: decoded.email } });
-    if (existing) return res.status(400).json({ message: "User already exists" });
-
+    if (existing) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+ 
+    // 3. Hash password and create the staff user
     const hashedPassword = await bcrypt.hash(password, 10);
-
+ 
     const user = await User.create({
       name,
       title,
       email: decoded.email,
       password: hashedPassword,
-      role: decoded.role,        // "staff" — from token, not client input
+      role: decoded.role,             // "staff" — from token, not client input
       hospitalId: decoded.hospitalId, // from token, not client input
     });
-
-    res.status(201).json({ message: "Signup successful", user });
+ 
+    // 4. Issue a real session token so the frontend can auto-login,
+    //    same shape/secret as stafflogin below
+    const sessionToken = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+ 
+    console.log(`new staff account created: ${user.email}`);
+ 
+    // 5. Respond in the exact shape the frontend expects:
+    //    { token, user: { id, name, email, role } }
+    return res.status(201).json({
+      message: "Signup successful",
+      token: sessionToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
   } catch (err) {
-    console.error("signupStaff error:", err); // <-- see the real cause in your server logs
+    console.error("signupStaff error:", err);
     if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
       return res.status(400).json({ message: "Invalid or expired invite link" });
     }
     return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
-
+ 
+// login handler for staff
 export const stafflogin = async (req, res) => {
   try {
-    const { email, password } = req.body
-
+    const { email, password } = req.body;
+ 
     if (!email || !password) {
-      return res.status(400).json({ message: " email and password are required" })
+      return res.status(400).json({ message: "Email and password are required" });
     }
-
+ 
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(400).json({ message: "user not found, invalid email or password" })
+      return res.status(400).json({ message: "Invalid email or password" });
     }
-
-    const passwordmatch = await bcrypt.compare(password, user.password)
-    if (!passwordmatch) {
-      return res.status(400).json({ message: "password is incorrect , try again plzzz" })
+ 
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return res.status(400).json({ message: "Invalid email or password" });
     }
-
-    const token = await jwt.sign(
+ 
+    const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" },
+      { expiresIn: "1d" }
     );
-
-    res.status(200).json({
-      message: "login successful",
+ 
+    console.log(`staff member logged in: ${user.email}`);
+ 
+    return res.status(200).json({
+      message: "Login successful",
       token,
       user: {
         id: user.id,
@@ -130,9 +164,10 @@ export const stafflogin = async (req, res) => {
         email: user.email,
         role: user.role,
       },
-    })
+    });
   } catch (err) {
-    console.error("login error:", err);
-    res.status(500).json({ message: "Something went wrong. Please try again." });
+    console.error("stafflogin error:", err);
+    return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
-}
+};
+ 
