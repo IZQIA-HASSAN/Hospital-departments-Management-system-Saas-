@@ -19,15 +19,19 @@ const Staff = sequelize.define(
       unique: true,
       validate: { isEmail: true },
     },
-    // ADDED: staff login credential. Never store raw passwords — this holds
-    // a bcrypt hash only. Excluded from API responses in the controller.
     passwordHash: {
       type: DataTypes.STRING,
       allowNull: false,
     },
     role: {
       type: DataTypes.STRING,
-      defaultValue: 'staff', // e.g. staff, manager, admin
+      defaultValue: 'staff',
+    },
+    // ADDED: without this, staff can't be scoped to the hospital that
+    // invited them — getstaff had no way to filter per-admin.
+    hospitalId: {
+      type: DataTypes.UUID,
+      allowNull: false,
     },
     isOnline: {
       type: DataTypes.BOOLEAN,

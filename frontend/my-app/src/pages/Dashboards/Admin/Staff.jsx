@@ -121,6 +121,7 @@ export default function Staff() {
 
   return (
     <div>
+      {/* Single invite form — only one email input on this page */}
       <div className="border border-neutral-200 rounded-xl p-6 bg-white mb-8">
         <p className="font-serif text-lg font-semibold mb-4">
           Invite a staff member

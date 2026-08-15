@@ -16,7 +16,7 @@ function StaffLogin() {
 
   const login = useMutation({
     mutationFn: async (formData) => {
-      const res = await fetch("http://localhost:5000/api/auth/stafflogin", {
+      const res = await fetch("http://localhost:5000/api/auth/staff-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

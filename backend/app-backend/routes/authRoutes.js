@@ -1,5 +1,5 @@
 import express from "express";
-import { signup, login , verifyInvite , signupStaff } from "../controllers/authController.js";
+import { signup, login , verifyInvite , signupStaff , stafflogin  } from "../controllers/authController.js";
 import { protect } from "../middleware/auth.js";
 import { authorize } from "../middleware/checkRole.js";
 
@@ -9,6 +9,7 @@ router.post("/signup", signup);
 router.post("/login", login);
 router.get("/verify-invite", verifyInvite);
 router.post("/signup-staff", signupStaff);
+router.post("/staff-login", stafflogin);
 
 router.get("/admindash", protect, authorize("admin"), (req, res) => {
   res.json({ message: `Welcome Admin ${req.user.name}` });
