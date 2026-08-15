@@ -17,7 +17,7 @@ import Staff from "./Staff";
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "staff", label: "Staff", icon: Users },
-  { id: "shifts", label: "Shifts", icon: CalendarClock },
+  { id: "departments", label: "Departments", icon: CalendarClock },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
