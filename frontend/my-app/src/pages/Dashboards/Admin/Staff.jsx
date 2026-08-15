@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { UserPlus2 } from "lucide-react";
+import { Mail } from "lucide-react";
 import socket from "../../../socket.js";
 
 async function fetchStaff() {
@@ -12,8 +12,12 @@ async function fetchStaff() {
   return data;
 }
 
-async function createStaff(payload) {
-  const res = await fetch("http://localhost:5000/api/staff", {
+// Sends an invite email instead of creating the staff record directly.
+// The actual Staff row gets created when the invited person completes
+// signup via the link in that email (POST /api/staff/staff-signup or
+// whatever your invite-completion route is).
+async function inviteStaff(payload) {
+  const res = await fetch("http://localhost:5000/api/staff/invite", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -22,7 +26,7 @@ async function createStaff(payload) {
     body: JSON.stringify(payload),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to add staff");
+  if (!res.ok) throw new Error(data.message || "Failed to send invite");
   return data;
 }
 
@@ -40,12 +44,9 @@ async function removeStaff(id) {
 
 export default function Staff() {
   const queryClient = useQueryClient();
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", role: "staff" });
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteSent, setInviteSent] = useState(false);
 
-  // FIX: was queryFn: fetchStaff pointing at an undefined `fetchStaff` while
-  // the function declared above was named `fetchstaff` (lowercase). Renamed
-  // the function to fetchStaff so this actually resolves.
   const {
     data: staffList = [],
     isLoading,
@@ -55,21 +56,15 @@ export default function Staff() {
     queryFn: fetchStaff,
   });
 
-  // FIX: was `addmutation` (lowercase) but referenced later as `addMutation`.
-  // Renamed consistently to addMutation everywhere below.
-  const addMutation = useMutation({
-    mutationFn: createStaff,
-    onSuccess: (newStaff) => {
-      queryClient.setQueryData(["staff"], (old = []) =>
-        old.find((s) => s.id === newStaff.id) ? old : [...old, newStaff]
-      );
-      setForm({ name: "", email: "", role: "staff" });
-      setShowAddForm(false);
+  const inviteMutation = useMutation({
+    mutationFn: inviteStaff,
+    onSuccess: () => {
+      setInviteEmail("");
+      setInviteSent(true);
+      setTimeout(() => setInviteSent(false), 4000);
     },
   });
 
-  // FIX: was `deletemutation` (lowercase) but referenced later as
-  // `deleteMutation`. Renamed consistently.
   const deleteMutation = useMutation({
     mutationFn: removeStaff,
     onSuccess: (id) => {
@@ -82,9 +77,6 @@ export default function Staff() {
   useEffect(() => {
     socket.connect();
 
-    // FIX: handler was named onStatuChanged (typo) but socket.on(...) below
-    // referenced onStatusChanged, which didn't exist — this would have
-    // thrown a ReferenceError. Renamed consistently.
     const onStatusChanged = ({ id, isOnline }) => {
       queryClient.setQueryData(["staff"], (old = []) =>
         old.map((s) => (s.id === id ? { ...s, isOnline } : s))
@@ -115,9 +107,9 @@ export default function Staff() {
     };
   }, [queryClient]);
 
-  const handleAddStaff = (e) => {
+  const handleInvite = (e) => {
     e.preventDefault();
-    addMutation.mutate(form);
+    inviteMutation.mutate({ email: inviteEmail });
   };
 
   const handleDelete = (id) => {
@@ -129,6 +121,38 @@ export default function Staff() {
 
   return (
     <div>
+      <div className="border border-neutral-200 rounded-xl p-6 bg-white mb-8">
+        <p className="font-serif text-lg font-semibold mb-4">
+          Invite a staff member
+        </p>
+        <form onSubmit={handleInvite} className="flex flex-col sm:flex-row gap-3">
+          <input
+            type="email"
+            required
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            placeholder="staff@example.com"
+            className="flex-1 bg-transparent border-b border-neutral-300 py-2 text-[0.95rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
+          />
+          <button
+            type="submit"
+            disabled={inviteMutation.isPending}
+            className="inline-flex items-center justify-center gap-2 bg-emerald-700 text-neutral-50 px-6 py-2.5 rounded-full text-sm font-medium hover:bg-emerald-800 transition-colors disabled:opacity-60 whitespace-nowrap"
+          >
+            <Mail size={16} />
+            {inviteMutation.isPending ? "Sending…" : "Send Invite"}
+          </button>
+        </form>
+        {inviteSent && (
+          <p className="text-sm text-emerald-700 mt-3">Invite sent.</p>
+        )}
+        {inviteMutation.isError && (
+          <p className="text-sm text-red-600 mt-3">
+            {inviteMutation.error.message}
+          </p>
+        )}
+      </div>
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <p className="font-serif text-lg font-semibold">Staff on roster</p>
@@ -136,104 +160,12 @@ export default function Staff() {
             {onlineCount} online · {staffList.length} total
           </p>
         </div>
-        <button
-          onClick={() => setShowAddForm((v) => !v)}
-          className="inline-flex items-center gap-2 bg-emerald-700 text-neutral-50 px-5 py-2.5 rounded-full text-sm font-medium hover:bg-emerald-800 transition-colors whitespace-nowrap"
-        >
-          <UserPlus2 size={16} />
-          Add Staff
-        </button> 
       </div>
 
-      {(queryError || addMutation.isError || deleteMutation.isError) && (
+      {(queryError || deleteMutation.isError) && (
         <p className="text-sm text-red-600 mb-6">
-          {queryError?.message ||
-            addMutation.error?.message ||
-            deleteMutation.error?.message}
+          {queryError?.message || deleteMutation.error?.message}
         </p>
-      )}
-
-       {showAddForm && (
-        <form
-          onSubmit={handleAddStaff}
-          className="border border-neutral-200 rounded-xl p-6 bg-white mb-8 flex flex-col gap-5"
-        >
-          <p className="font-serif text-lg font-semibold">Add a staff member</p>
-
-          <div className="grid sm:grid-cols-2 gap-5">
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="staff-name"
-                className="font-mono text-xs tracking-wide text-neutral-500"
-              >
-                FULL NAME
-              </label>
-              <input
-                id="staff-name"
-                type="text"
-                required
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Amelia Rhodes"
-                className="bg-transparent border-b border-neutral-300 py-2 text-[0.95rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="staff-email"
-                className="font-mono text-xs tracking-wide text-neutral-500"
-              >
-                EMAIL
-              </label>
-              <input
-                id="staff-email"
-                type="email"
-                required
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="amelia@round.com"
-                className="bg-transparent border-b border-neutral-300 py-2 text-[0.95rem] outline-none placeholder:text-neutral-400 focus:border-emerald-700 transition-colors"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5 sm:w-48">
-            <label
-              htmlFor="staff-role"
-              className="font-mono text-xs tracking-wide text-neutral-500"
-            >
-              ROLE
-            </label>
-            <select
-              id="staff-role"
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="bg-transparent border-b border-neutral-300 py-2 text-[0.95rem] outline-none focus:border-emerald-700 transition-colors"
-            >
-              <option value="staff">Staff</option>
-              <option value="manager">Manager</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-
-          <div className="flex gap-3 mt-2">
-            <button
-              type="submit"
-              disabled={addMutation.isPending}
-              className="bg-emerald-700 text-neutral-50 px-6 py-2.5 rounded-full text-sm font-medium hover:bg-emerald-800 transition-colors disabled:opacity-60"
-            >
-              {addMutation.isPending ? "Adding…" : "Add Staff"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowAddForm(false)}
-              className="px-6 py-2.5 rounded-full text-sm font-medium text-neutral-600 hover:bg-neutral-100 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
       )}
 
       {isLoading ? (
@@ -241,7 +173,7 @@ export default function Staff() {
       ) : staffList.length === 0 ? (
         <div className="border border-dashed border-neutral-300 rounded-xl p-10 text-center bg-white">
           <p className="font-serif text-xl mb-1">No staff yet</p>
-          <p className="text-sm opacity-60">Add your first staff member above.</p>
+          <p className="text-sm opacity-60">Invite your first staff member above.</p>
         </div>
       ) : (
         <div className="border border-neutral-200 rounded-xl overflow-hidden bg-white">

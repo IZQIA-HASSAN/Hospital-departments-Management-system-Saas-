@@ -4,46 +4,46 @@ import jwt from "jsonwebtoken";
 import { sendEmail } from "../utils/sendEmail.js";
 
 // creating staff member
-export const addstaff = async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
+// export const addstaff = async (req, res) => {
+//   try {
+//     const { name, email, password, role } = req.body;
 
-    // FIX: was requiring `title` but never using it, and building
-    // Staff.create({ name, email, role }) with `role` undefined — that
-    // threw a ReferenceError. Now consistently uses `role`, matching the
-    // model and the frontend form.
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email, and password are required' });
-    }
+//     // FIX: was requiring `title` but never using it, and building
+//     // Staff.create({ name, email, role }) with `role` undefined — that
+//     // threw a ReferenceError. Now consistently uses `role`, matching the
+//     // model and the frontend form.
+//     if (!name || !email || !password) {
+//       return res.status(400).json({ message: 'Name, email, and password are required' });
+//     }
 
-    const existing = await Staff.findOne({ where: { email: email.toLowerCase() } });
-    if (existing) {
-      return res.status(409).json({ error: 'Staff with this email already exists' });
-    }
+//     const existing = await Staff.findOne({ where: { email: email.toLowerCase() } });
+//     if (existing) {
+//       return res.status(409).json({ error: 'Staff with this email already exists' });
+//     }
 
-    // FIX: password must never be stored as plain text — hash it.
-    const passwordHash = await bcrypt.hash(password, 10);
+//     // FIX: password must never be stored as plain text — hash it.
+//     const passwordHash = await bcrypt.hash(password, 10);
 
-    const staff = await Staff.create({
-      name,
-      email: email.toLowerCase(),
-      passwordHash,
-      role: role || 'staff',
-    });
+//     const staff = await Staff.create({
+//       name,
+//       email: email.toLowerCase(),
+//       passwordHash,
+//       role: role || 'staff',
+//     });
     
 
-    // broadcasting to any active admin in dashboard, using websocket concept here
-    const io = req.app.get('io');
-    if (io) io.emit('staff:added', staff);
+//     // broadcasting to any active admin in dashboard, using websocket concept here
+//     const io = req.app.get('io');
+//     if (io) io.emit('staff:added', staff);
 
-    // never send the password hash back to the client
-    const { passwordHash: _omit, ...safeStaff } = staff.toJSON();
-    res.status(201).json(safeStaff);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-    console.log(err.message)
-  }
-};
+//     // never send the password hash back to the client
+//     const { passwordHash: _omit, ...safeStaff } = staff.toJSON();
+//     res.status(201).json(safeStaff);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//     console.log(err.message)
+//   }
+// };
 
 // getting staff members
 export const getstaff = async (req, res) => {

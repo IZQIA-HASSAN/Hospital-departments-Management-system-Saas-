@@ -12,7 +12,7 @@ const router = express.Router();
 import {
   delstaff,
   getstaff,
-  addstaff,
+  
 } from '../controllers/Staffcontroller.js';
 
 // register routes
@@ -21,7 +21,7 @@ import {
 // anything, and two GET "/" handlers meant the second was unreachable.
 // addstaff now POST, delstaff now DELETE.
 router.get('/', getstaff);
-router.post('/', addstaff);
+// router.post('/', addstaff);
 router.delete('/:id', delstaff);
 
 // FIX: `module.exports = router` was CommonJS syntax in an ESM file —
