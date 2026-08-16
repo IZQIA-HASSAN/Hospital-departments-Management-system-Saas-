@@ -9,3 +9,6 @@ some features need to be checked
 4. indexing in database as the app grows 
 
  code reviewed and wokring on solutions for the problems that are going to occur 
+
+
+ some of the issues are resolved for login and signup but have to make them solid 
