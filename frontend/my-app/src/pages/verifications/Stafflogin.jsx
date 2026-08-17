@@ -28,7 +28,7 @@ function StaffLogin() {
     onSuccess: (data) => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      navigate("/staffdash");
+      navigate("/staff");
     },
   });
 

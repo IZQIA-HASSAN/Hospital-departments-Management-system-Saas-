@@ -53,7 +53,7 @@ export default function Login() {
     onSuccess: (data) => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      navigate(data.user.role === "admin" ? "/Admindash" : "/Staffdash");
+      navigate(data.user.role === "admin" ? "/admin" : "/staff");
     },
   });
 

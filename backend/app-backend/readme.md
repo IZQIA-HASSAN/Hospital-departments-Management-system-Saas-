@@ -12,3 +12,5 @@ some features need to be checked
 
 
  some of the issues are resolved for login and signup but have to make them solid 
+
+ 

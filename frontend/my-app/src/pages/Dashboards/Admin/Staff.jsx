@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Mail } from "lucide-react";
 import socket from "../../../socket.js";
 
-async function fetchStaff() {
+export async function fetchStaff() {
   const res = await fetch("http://localhost:5000/api/staff", {
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
   });
