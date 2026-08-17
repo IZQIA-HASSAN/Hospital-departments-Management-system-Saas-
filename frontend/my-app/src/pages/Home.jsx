@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
-import { CalendarClock, Repeat, ShieldCheck, Activity } from "lucide-react";
+import { CalendarClock, Repeat, ShieldCheck, Activity, PlayCircle } from "lucide-react";
 import Footer from "../components/Footer";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -113,7 +114,7 @@ export default function Home() {
         .from(".hero-sub", { opacity: 0, y: 16, duration: 0.6 }, "-=0.35")
         .from(".hero-cta", { opacity: 0, y: 12, duration: 0.5 }, "-=0.3");
 
-      // Pulse line draw-in, chaotic -> settling
+      // Pulse line draw-in
       if (pathRef.current) {
         const len = pathRef.current.getTotalLength();
         gsap.set(pathRef.current, { strokeDasharray: len, strokeDashoffset: len });
@@ -149,10 +150,9 @@ export default function Home() {
       gsap.from(solutionCards.current, {
         opacity: 0,
         y: 24,
-        scale: 0.92,
-        rotate: 0,
+        scale: 0.94,
         stagger: 0.08,
-        duration: 0.7,
+        duration: 0.6,
         ease: "back.out(1.6)",
         scrollTrigger: { trigger: ".solution-grid", start: "top 80%" },
       });
@@ -171,6 +171,15 @@ export default function Home() {
         stagger: 0.1,
         duration: 0.6,
         scrollTrigger: { trigger: ".features-grid", start: "top 85%" },
+      });
+
+      // Video section
+      gsap.from(".video-copy, .video-frame", {
+        opacity: 0,
+        y: 24,
+        stagger: 0.1,
+        duration: 0.7,
+        scrollTrigger: { trigger: ".video-section", start: "top 80%" },
       });
 
       // CTA
@@ -199,10 +208,19 @@ export default function Home() {
           <a href="#problem" className="opacity-75 hover:opacity-100">Problem</a>
           <a href="#solution" className="opacity-75 hover:opacity-100">Solution</a>
           <a href="#features" className="opacity-75 hover:opacity-100">Features</a>
+          <a href="#watch" className="opacity-75 hover:opacity-100">Watch</a>
         </div>
-        <button className="bg-emerald-700 text-neutral-50 px-5 py-2.5 rounded-full text-sm font-medium">
-          Request a demo
-        </button>
+        <div className="flex items-center gap-5">
+          <Link to="/login" className="text-sm font-medium opacity-75 hover:opacity-100 transition-opacity">
+            Log in
+          </Link>
+          <Link
+            to="/signup"
+            className="bg-emerald-700 text-neutral-50 px-5 py-2.5 rounded-full text-sm font-medium hover:bg-emerald-800 transition-colors"
+          >
+            Sign up
+          </Link>
+        </div>
       </nav>
 
       {/* Hero */}
@@ -224,24 +242,27 @@ export default function Home() {
           />
         </svg>
 
-        <span className="eyebrow-brand relative font-mono text-xs tracking-[0.14em] text-emerald-700 mb-6">
+        <span className="eyebrow-brand relative font-mono text-md font-extrabold tracking-[0.14em]  mb-6">
           HOSPITAL STAFF, ONE ROSTER
         </span>
         <h1 className="font-serif font-semibold leading-[0.98] text-[clamp(3.2rem,9vw,7rem)]">
           <span className="hero-line block">Every shift,</span>
           <span className="hero-line block italic font-normal text-emerald-700">in rhythm.</span>
         </h1>
-        <p className="hero-sub relative max-w-xl text-base sm:text-lg leading-relaxed opacity-70 mt-7 mb-10">
+        <p className="hero-sub relative max-w-xl text-lg sm:text-xl leading-relaxed opacity-70 mt-7 mb-10">
           Round replaces spreadsheets and group texts with one live pulse for your staff —
           schedules, swaps, and coverage, always in sync.
         </p>
         <div className="hero-cta relative flex gap-4">
-          <button className="bg-emerald-700 text-neutral-50 px-7 py-3.5 rounded-full text-sm font-medium">
+          <button className="bg-emerald-700 text-neutral-50 px-7 py-3.5 rounded-full text-sm font-medium hover:bg-emerald-800 transition-colors">
             Request a demo
           </button>
-          <button className="border border-neutral-200 px-7 py-3.5 rounded-full text-sm">
+          <a
+            href="#watch"
+            className="border border-neutral-300 px-7 py-3.5 rounded-full text-sm hover:bg-white transition-colors"
+          >
             See how it works
-          </button>
+          </a>
         </div>
       </header>
 
@@ -278,13 +299,13 @@ export default function Home() {
       {/* Solution */}
       <section id="solution" className="bg-emerald-950 text-neutral-50 grid md:grid-cols-2 gap-12 items-center px-6 sm:px-10 lg:px-16 py-20 sm:py-28">
         <div className="solution-copy">
-          <span className="block font-mono text-xs tracking-[0.14em] text-emerald-400 mb-3">
+          <span className="block font-mono text-md tracking-[0.14em] italic   mb-3">
             THE SOLUTION
           </span>
-          <h2 className="font-serif font-semibold text-3xl sm:text-4xl mb-5">
+          <h2 className="font-serif font-semibold text-4xl sm:text-5xl mb-6">
             One roster, live, for every ward.
           </h2>
-          <p className="text-base leading-relaxed text-neutral-50/70">
+          <p className="text-lg leading-relaxed text-neutral-50/70">
             The same shifts. No longer scattered — visible, current, and confirmed, for
             everyone who needs to see them.
           </p>
@@ -295,7 +316,7 @@ export default function Home() {
               key={s.id}
               s={s}
               dark
-              extraClass="!border-emerald-500"
+              
               innerRef={(el) => (solutionCards.current[i] = el)}
             />
           ))}
@@ -303,11 +324,16 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section id="features" className="bg-emerald-950 text-neutral-50 px-6 sm:px-10 lg:px-16 pt-4 sm:pt-8 pb-20 sm:pb-28">
-        <span className="block text-center font-mono text-xs tracking-[0.14em] text-emerald-400">
-          HOW ROUND HELPS
-        </span>
-        <div className="features-grid mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <section id="features" className="bg-emerald-950 text-neutral-50 px-6 sm:px-10 lg:px-16 pt-20 sm:pt-28 pb-20 sm:pb-28">
+        <div className="max-w-2xl mx-auto text-center mb-14">
+          <span className="block font-mono text-md italic  tracking-[0.14em]  mb-3">
+            HOW ROUND HELPS
+          </span>
+          <h2 className="font-serif font-semibold text-4xl sm:text-5xl">
+            Everything your roster needs.
+          </h2>
+        </div>
+        <div className="features-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {FEATURES.map(({ icon: Icon, title, body }, i) => (
             <div
               key={title}
@@ -316,9 +342,35 @@ export default function Home() {
             >
               <Icon size={22} strokeWidth={1.6} color="#34d399" />
               <h3 className="font-serif font-semibold text-lg">{title}</h3>
-              <p className="text-sm leading-relaxed text-neutral-50/70">{body}</p>
+              <p className="text-base leading-relaxed text-neutral-50/70">{body}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Video */}
+      <section id="watch" className="video-section px-6 sm:px-10 lg:px-16 py-20 sm:py-28">
+        <div className="video-copy max-w-2xl mx-auto text-center mb-12">
+          <span className="block font-mono text-xs tracking-[0.14em] text-emerald-700 mb-3">
+            SEE IT IN ACTION
+          </span>
+          <h2 className="font-serif font-semibold text-4xl sm:text-5xl mb-4">
+            Watch Round run a live ward.
+          </h2>
+          <p className="text-lg leading-relaxed opacity-70">
+            A two-minute walkthrough of a shift swap, a credential check, and a coverage
+            alert, start to finish.
+          </p>
+        </div>
+        <div className="video-frame max-w-4xl mx-auto rounded-2xl overflow-hidden bg-neutral-900 aspect-video relative group cursor-pointer">
+          <video
+            className="w-full h-full object-cover"
+            controls
+            poster="/round-demo-poster.jpg"
+          >
+            <source src="/round-demo.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
         </div>
       </section>
 
@@ -328,10 +380,10 @@ export default function Home() {
           <h2 className="font-serif font-semibold text-4xl sm:text-5xl">
             Bring rhythm to your roster.
           </h2>
-          <p className="opacity-70 mb-1.5">
+          <p className="text-lg opacity-70 mb-1.5">
             See Round with your own wards, shifts, and staff.
           </p>
-          <button className="bg-emerald-700 text-neutral-50 px-7 py-3.5 rounded-full text-sm font-medium">
+          <button className="bg-emerald-700 text-neutral-50 px-7 py-3.5 rounded-full text-sm font-medium hover:bg-emerald-800 transition-colors">
             Request a demo
           </button>
         </div>

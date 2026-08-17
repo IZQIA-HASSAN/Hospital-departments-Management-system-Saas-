@@ -50,6 +50,7 @@ export const login = async (req, res) => {
       user: { id: user.id, name: user.name, email: user.email, role: user.role, title: user.title },
 
     });
+    console.log(token)
     console.log("user logged in")
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
