@@ -1,7 +1,7 @@
 import express from 'express';
 import { invitestaff } from '../controllers/Staffcontroller.js'
 import { protect } from "../middleware/auth.js";
-import { authorize } from '../middleware/checkrole.js';
+import { authorize } from '../middleware/checkRole.js';
 
 const router = express.Router();
 
