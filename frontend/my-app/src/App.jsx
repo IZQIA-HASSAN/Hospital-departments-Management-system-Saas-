@@ -7,7 +7,7 @@ import Forgotpassword from "./pages/auth/Forgotpassword";
 
 import InviteSent from "./pages/verifications/InviteSent";
 import StaffSignup from "./pages/verifications/StaffSignup";
-import StaffLogin from "./pages/verifications/Stafflogin";
+// import StaffLogin from "./pages/verifications/Stafflogin";
 
 import AdminLayout from "./pages/Dashboards/Admin/AdminLayout";
 import Admindash from "./pages/Dashboards/Admin/Admindash";
@@ -18,6 +18,7 @@ import StaffLayout from "./pages/Dashboards/Staff/StaffLayout";
 import Staffdash from "./pages/Dashboards/Staff/Staffdash";
 
 import DepartmentPage from "./pages/Dashboards/departments/DepartmentPage";
+import RequireRole from "./components/RequireRole";
 
 import "./App.css";
 
@@ -30,21 +31,35 @@ function App() {
       <Route path="/Forgotpassword" element={<Forgotpassword />} />
       <Route path="/invite-sent" element={<InviteSent />} />
       <Route path="/staff-signup" element={<StaffSignup />} />
-      <Route path="/staff-login" element={<StaffLogin />} />
+      {/* <Route path="/staff-login" element={<StaffLogin />} /> */}
 
-      {/* Admin dashboard — sidebar layout stays mounted, pages swap via Outlet */}
-      <Route path="/admin" element={<AdminLayout />}>
+      {/* Admin dashboard — guarded */}
+      <Route
+        path="/admin"
+        element={
+          <RequireRole role="admin">
+            <AdminLayout />
+          </RequireRole>
+        }
+      >
         <Route index element={<Admindash />} />
         <Route path="staff" element={<Staff />} />
         <Route path="departments/:slug" element={<DepartmentPage />} />
         <Route path="settings" element={<Settings />} />
       </Route>
 
-      {/* Staff dashboard — same pattern */}
-      <Route path="/staff" element={<StaffLayout />}>
-        <Route index element={<Staffdash />} />
+      {/* Staff dashboard — guarded */}
+      <Route
+        path="/staff"
+        element={
+          <RequireRole role="staff">
+            <StaffLayout />
+          </RequireRole>
+        }
+      >
+        <Route index  element={<Staffdash />} />
         <Route path="departments/:slug" element={<DepartmentPage />} />
-         <Route path="settings" element={<Settings />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
     </Routes>
   );

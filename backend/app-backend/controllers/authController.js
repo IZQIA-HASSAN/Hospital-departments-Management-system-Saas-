@@ -35,28 +35,28 @@ export const signup = async (req, res) => {
   }
 };
 
-export const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ where: { email } });
+// export const login = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+//     const user = await User.findOne({ where: { email } });
 
-    if (!user || !(await user.matchPassword(password))) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
+//     if (!user || !(await user.matchPassword(password))) {
+//       return res.status(401).json({ message: "Invalid email or password" });
+//     }
 
-    const token = generateToken(user);
-    res.json({
-      token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role, title: user.title },
+//     const token = generateToken(user);
+//     res.json({
+//       token,
+//       user: { id: user.id, name: user.name, email: user.email, role: user.role, title: user.title },
 
-    });
-    console.log(token)
-    console.log("user logged in")
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
-    console.log(err.message)
-  }
-};
+//     });
+//     console.log(token)
+//     console.log("user logged in")
+//   } catch (err) {
+//     res.status(500).json({ message: "Server error", error: err.message });
+//     console.log(err.message)
+//   }
+// };
 
 // verifying invite token 
 export const verifyInvite = async (req, res) => {
@@ -103,7 +103,7 @@ export const signupStaff = async (req, res) => {
     const sessionToken = jwt.sign(
       { id: staff.id, email: staff.email, role: staff.role },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "20d" }
     );
 
     // ADDED: notify any admin dashboards live, same as addstaff used to
@@ -138,46 +138,84 @@ export const signupStaff = async (req, res) => {
   }
 };
 
-export const stafflogin = async (req, res) => {
-  try {
+// export const stafflogin = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+
+//     if (!email || !password) {
+//       return res.status(400).json({ message: "Email and password are required" });
+//     }
+
+//     // FIX: look up Staff, not User
+//     const staff = await Staff.findOne({ where: { email } });
+//     if (!staff) {
+//       return res.status(400).json({ message: "Invalid email or password" });
+//     }
+
+//     // FIX: compare against passwordHash, matching the Staff model's field name
+//     const passwordMatch = await bcrypt.compare(password, staff.passwordHash);
+//     if (!passwordMatch) {
+//       return res.status(400).json({ message: "Invalid email or password" });
+//     }
+
+//     const token = jwt.sign(
+//       { id: staff.id, email: staff.email, role: staff.role },
+//       process.env.JWT_SECRET,
+//       { expiresIn: "1d" }
+//     );
+
+//     console.log(`staff member logged in: ${staff.email}`);
+
+//     return res.status(200).json({
+//       message: "Login successful",
+//       token,
+//       user: {
+//         id: staff.id,
+//         name: staff.name,
+//         email: staff.email,
+//         role: staff.role,
+//       },
+//     });
+//   } catch (err) {
+//     console.error("stafflogin error:", err);
+//     return res.status(500).json({ message: "Something went wrong. Please try again." });
+//   }
+// };
+
+// at first there werre seperate logins for staff and admin but now login will only be one and signups differerent as they follow differernt architecture
+
+export const unifiedLogin = async(req, res)=>{
+try {
     const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
-    // FIX: look up Staff, not User
+    // Try admin/User table first
+    const user = await User.findOne({ where: { email } });
+    if (user && (await user.matchPassword(password))) {
+      const token = generateToken(user);
+      return res.json({
+        token,
+        user: { id: user.id, name: user.name, email: user.email, role: user.role, title: user.title },
+      });
+    }
+
+    // Fall back to Staff table
     const staff = await Staff.findOne({ where: { email } });
-    if (!staff) {
-      return res.status(400).json({ message: "Invalid email or password" });
+    if (staff && (await bcrypt.compare(password, staff.passwordHash))) {
+      const token = generateToken(staff)
+      return res.json({
+        token,
+        user: { id: staff.id, name: staff.name, email: staff.email, role: staff.role },
+      });
     }
 
-    // FIX: compare against passwordHash, matching the Staff model's field name
-    const passwordMatch = await bcrypt.compare(password, staff.passwordHash);
-    if (!passwordMatch) {
-      return res.status(400).json({ message: "Invalid email or password" });
-    }
-
-    const token = jwt.sign(
-      { id: staff.id, email: staff.email, role: staff.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
-
-    console.log(`staff member logged in: ${staff.email}`);
-
-    return res.status(200).json({
-      message: "Login successful",
-      token,
-      user: {
-        id: staff.id,
-        name: staff.name,
-        email: staff.email,
-        role: staff.role,
-      },
-    });
+    // Neither matched — same generic message either way (don't leak which table failed)
+    return res.status(401).json({ message: "Invalid email or password" });
   } catch (err) {
-    console.error("stafflogin error:", err);
-    return res.status(500).json({ message: "Something went wrong. Please try again." });
+    console.error("unifiedLogin error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
-};
+}

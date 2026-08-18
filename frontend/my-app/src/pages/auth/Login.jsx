@@ -1,18 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import gsap from "gsap";
-import { Eye, EyeOff, ArrowRight, Check } from "lucide-react";
+import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 
 const SHIFTS = [
   { id: "01", name: "Dr. R. Khan", time: "07:00–15:00", ward: "ICU" },
   { id: "03", name: "Dr. S. Patel", time: "23:00–07:00", ward: "ICU" },
   { id: "05", name: "Dr. L. Chen", time: "15:00–23:00", ward: "ER" },
-];
-
-const ROLES = [
-  { id: "staff", label: "Staff" },
-  { id: "admin", label: "Admin" },
 ];
 
 export default function Login() {
@@ -22,7 +17,6 @@ export default function Login() {
   const [form, setForm] = useState({
     email: "",
     password: "",
-    role: "staff", // default
   });
 
   const navigate = useNavigate();
@@ -31,14 +25,11 @@ export default function Login() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  // Single unified endpoint — backend checks both User and Staff tables
+  // and returns whichever account matches. No role selection needed client-side.
   const login = useMutation({
     mutationFn: async (formData) => {
-      const endpoint =
-        formData.role === "admin"
-          ? "http://localhost:5000/api/auth/login"
-          : "http://localhost:5000/api/auth/stafflogin";
-
-      const res = await fetch(endpoint, {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -157,7 +148,7 @@ export default function Login() {
           <h2 className="font-serif font-semibold text-3xl sm:text-4xl mb-2">Welcome back.</h2>
           <p className="text-sm opacity-60 mb-10">
             New to Round?{" "}
-            <Link to="/Signup" className="text-emerald-700 font-medium hover:underline">
+            <Link to="/signup" className="text-emerald-700 font-medium hover:underline">
               Create an account
             </Link>
           </p>
@@ -167,27 +158,6 @@ export default function Login() {
           )}
 
           <form onSubmit={onSubmit} className="flex flex-col gap-7">
-            <div className="auth-field flex flex-col gap-1.5">
-              <span className="font-mono text-xs tracking-wide text-neutral-500">SIGNING IN AS</span>
-              <div className="flex gap-2 mt-0.5">
-                {ROLES.map((r) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => setForm((prev) => ({ ...prev, role: r.id }))}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm border transition-colors ${
-                      form.role === r.id
-                        ? "bg-emerald-700 border-emerald-700 text-neutral-50"
-                        : "border-neutral-300 text-neutral-600 hover:border-neutral-400"
-                    }`}
-                  >
-                    {form.role === r.id && <Check size={13} />}
-                    {r.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div className="auth-field flex flex-col gap-1.5">
               <label htmlFor="email" className="font-mono text-xs tracking-wide text-neutral-500">
                 WORK EMAIL
@@ -209,7 +179,7 @@ export default function Login() {
                 <label htmlFor="password" className="font-mono text-xs tracking-wide text-neutral-500">
                   PASSWORD
                 </label>
-                <Link to="/Forgotpassword" className="text-xs text-emerald-700 hover:underline">
+                <Link to="/forgotpassword" className="text-xs text-emerald-700 hover:underline">
                   Forgot?
                 </Link>
               </div>
