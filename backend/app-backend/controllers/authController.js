@@ -2,7 +2,8 @@ import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import Staff from "../models/Staff.js";   // uncomment/add this — no // in front
+import Staff from "../models/Staff.js";
+import { sendEmail } from "../utils/sendEmail.js"; // uncomment/add this — no // in front
 
 export const signup = async (req, res) => {
   try {
@@ -184,8 +185,8 @@ export const signupStaff = async (req, res) => {
 
 // at first there werre seperate logins for staff and admin but now login will only be one and signups differerent as they follow differernt architecture
 
-export const unifiedLogin = async(req, res)=>{
-try {
+export const unifiedLogin = async (req, res) => {
+  try {
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -219,3 +220,100 @@ try {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 }
+
+// forgot password controller 
+
+export const forgotPassword =async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "email is required" })
+
+    }
+
+    // now check both tables to find the correct email to send invite link
+
+    const user = await User.findOne({ where: { email } })
+    if (!user) {
+      const staff = Staff.findOne({ where: { email } })
+
+    }
+    const account = user || staff
+    const accounttype = user ? "user" : "staff"
+    if (!account) {
+      return res.status(200).json({
+        message: "If that email is registered, a reset link has been sent.",
+      });
+    }
+
+    const resetToken = jwt.sign(
+      { id: account.id, type: accounttype, puropse: "password-reset" },
+      process.env.JWT_RESET_SECRET,
+      { expiresIn: "15m" }
+    )
+
+    const link = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+    await sendEmail({
+      to: email,
+      subject: "Reset your Round password",
+      html: `
+        <p>You requested a password reset.</p>
+        <p><a href="${link}">Click here to set a new password</a></p>
+        <p>This link expires in 15 minutes. If you didn't request this, ignore this email.</p>
+      `,
+    });
+    console.log(`password reset email sent to: ${email}`);
+    return res.status(200).json({
+      message: "If that email is registered, a reset link has been sent.",
+    });
+  } catch (err) {
+    console.error("forgotPassword error:", err);
+    res.status(500).json({ message: "Something went wrong. Please try again." });
+  }
+}
+
+// now resetting password
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ message: "Token and new password are required" });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_RESET_SECRET);
+    } catch (err) {
+      return res.status(400).json({ message: "Invalid or expired reset link" });
+    }
+
+    if (decoded.purpose !== "password-reset") {
+      return res.status(400).json({ message: "Invalid reset token" });
+    }
+
+    if (decoded.type === "user") {
+      const user = await User.findByPk(decoded.id);
+      if (!user) return res.status(400).json({ message: "Account not found" });
+      // Assumes User model hashes password automatically via a beforeSave hook,
+      // matching how signup/User.create() already handles it.
+      user.password = password;
+      await user.save();
+    } else {
+      const staff = await Staff.findByPk(decoded.id);
+      if (!staff) return res.status(400).json({ message: "Account not found" });
+      staff.passwordHash = await bcrypt.hash(password, 10);
+      await staff.save();
+    }
+
+    console.log(`password reset completed for ${decoded.type} id ${decoded.id}`);
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error("resetPassword error:", err);
+    res.status(500).json({ message: "Something went wrong. Please try again." });
+  }
+};

@@ -3,7 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import Home from "./pages/Home";
-import Forgotpassword from "./pages/auth/Forgotpassword";
+import Forgotpassword from "./pages/auth/ForgotPassword";
 
 import InviteSent from "./pages/verifications/InviteSent";
 import StaffSignup from "./pages/verifications/StaffSignup";
@@ -20,6 +20,10 @@ import Staffdash from "./pages/Dashboards/Staff/Staffdash";
 import DepartmentPage from "./pages/Dashboards/departments/DepartmentPage";
 import RequireRole from "./components/RequireRole";
 
+
+import ResetPassword from "./pages/auth/ResetPassword"; // adjust path
+
+
 import "./App.css";
 
 function App() {
@@ -31,6 +35,8 @@ function App() {
       <Route path="/Forgotpassword" element={<Forgotpassword />} />
       <Route path="/invite-sent" element={<InviteSent />} />
       <Route path="/staff-signup" element={<StaffSignup />} />
+      <Route path="/forgotpassword" element={<Forgotpassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       {/* <Route path="/staff-login" element={<StaffLogin />} /> */}
 
       {/* Admin dashboard — guarded */}
@@ -57,7 +63,7 @@ function App() {
           </RequireRole>
         }
       >
-        <Route index  element={<Staffdash />} />
+        <Route index element={<Staffdash />} />
         <Route path="departments/:slug" element={<DepartmentPage />} />
         <Route path="settings" element={<Settings />} />
       </Route>
