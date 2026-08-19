@@ -1,5 +1,5 @@
 import { DataTypes } from "sequelize";
-import sequelize from "../config/database.js"; // adjust path to your sequelize instance
+import sequelize from "../config/db.js"; // adjust path to your sequelize instance
 
 const OPDVisit = sequelize.define(
   "OPDVisit",

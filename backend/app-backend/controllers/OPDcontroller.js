@@ -1,6 +1,6 @@
 import { Op } from "sequelize";
 // op stands for operators in sequelize , special object that holds comparison and logical symbols
-import OPDVisit from "../models/Opdvisit";
+import OPDVisit from "../models/Opdvisit.js";
 
 
 // registering an opd visit 
@@ -73,21 +73,86 @@ export const getopdvisits = async (req, res) => {
 // lets get a single opd visit 
 
 export const getOPDVisitById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const visit = await OPDVisit.findByPk(id);
- 
-    if (!visit) {
-      return res.status(404).json({ message: "OPD visit not found" });
+    try {
+        const { id } = req.params;
+        const visit = await OPDVisit.findByPk(id);
+
+        if (!visit) {
+            return res.status(404).json({ message: "OPD visit not found" });
+        }
+
+        return res.status(200).json({ visit });
+    } catch (err) {
+        console.error("getOPDVisitById error:", err);
+        res.status(500).json({ message: "Something went wrong. Please try again." });
     }
- 
-    return res.status(200).json({ visit });
-  } catch (err) {
-    console.error("getOPDVisitById error:", err);
-    res.status(500).json({ message: "Something went wrong. Please try again." });
-  }
 }
 
 
 
-// 
+//updating opd visits status
+
+export const updatevisitstatus = async (req, res) => {
+    try {
+        const { id } = req.params
+        const { status } = req.body
+
+        const allowedstatus = ["waiting", "in-progress", "cancelled", "completed"]
+
+        if (!status || !allowedstatus.includes(status)) {
+            return res.status(400).json({ message: `status ,ust be one of these ${allowedstatus.join(",")}` })
+        }
+
+        const visit = await OPDVisit.findByPk(id);
+        if (!visit) {
+            return res.status(404).json({ message: "OPD visit not found" });
+        }
+
+        visit.status = status
+        await visit.save()
+    } catch (err) {
+        console.error("updateOPDVisitStatus error:", err);
+        res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+}
+
+// gets todays live queue
+
+export const todayslivequeue = async (req, res) => {
+    try {
+        const today = new Date().toISOString().split("T")[0]
+
+
+        const queue = await OPDVisit.findAll({
+            where: {
+                visitDate: today,
+                status: { [Op.in]: ["waiting", "in-progress"] },
+            },
+            order: [["tokenNumber", "ASC"]]
+        })
+        return res.status(200).json({ queue })
+    } catch (err) {
+        console.error("getTodayQueue error:", err);
+        res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+}
+
+// deleting a visit recored
+
+export const deleterecord = async (req, res)=>{
+    try{
+        const {id} = req.params
+
+        const visit = await OPDVisit.findByPk(id)
+
+            if(!visit){
+                return res.status(404).json({message : "requested visit not found"})
+            }
+
+            await visit.destroy()
+            return res.status(200).json({message : "the requested visit has been successfully deleted"})
+    }catch(err){
+        console.log("some error has occur" , err)
+        return res.status(500).json({message : "something went wrong please try again"})
+    }
+}

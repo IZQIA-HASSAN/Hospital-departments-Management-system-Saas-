@@ -8,6 +8,7 @@ import authRoutes from "./routes/authRoutes.js";
 import Hospitalroutes from "./routes/Hospitalroutes.js";
 import Staffroutes from "./routes/Staffroutes.js";
 import initsocket from "./utils/Socketmanager.js";
+import OPDroutes from "./routes/OPDroutes.js"
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/hospitals", Hospitalroutes);
 app.use("/api/staff", Staffroutes);
+app.use("/api/opd" , OPDroutes)
 
 
 const server = http.createServer(app);
