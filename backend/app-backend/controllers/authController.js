@@ -234,8 +234,9 @@ export const forgotPassword =async (req, res) => {
     // now check both tables to find the correct email to send invite link
 
     const user = await User.findOne({ where: { email } })
+    let staff = null;
     if (!user) {
-      const staff = Staff.findOne({ where: { email } })
+       staff =await  Staff.findOne({ where: { email } })
 
     }
     const account = user || staff
@@ -247,7 +248,7 @@ export const forgotPassword =async (req, res) => {
     }
 
     const resetToken = jwt.sign(
-      { id: account.id, type: accounttype, puropse: "password-reset" },
+      { id: account.id, type: accounttype, purpose: "password-reset" },
       process.env.JWT_RESET_SECRET,
       { expiresIn: "15m" }
     )
@@ -317,3 +318,5 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
+
+
