@@ -31,7 +31,7 @@ export const registeropdvisit = async (req, res) => {
             department,
             doctorName,
             reason,
-            tokenNumber,
+            tokenNumber: tokennumber ,
             visitDate: today,
             status: "waiting",
         })
@@ -110,6 +110,7 @@ export const updatevisitstatus = async (req, res) => {
 
         visit.status = status
         await visit.save()
+        return res.status(200).json({message : "visit status has been updated"})
     } catch (err) {
         console.error("updateOPDVisitStatus error:", err);
         res.status(500).json({ message: "Something went wrong. Please try again." });
