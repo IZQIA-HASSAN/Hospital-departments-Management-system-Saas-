@@ -9,6 +9,7 @@ import Hospitalroutes from "./routes/Hospitalroutes.js";
 import Staffroutes from "./routes/Staffroutes.js";
 import initsocket from "./utils/Socketmanager.js";
 import OPDroutes from "./routes/OPDroutes.js"
+import ICUroutes from "./routes/ICUroutes.js"
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/hospitals", Hospitalroutes);
 app.use("/api/staff", Staffroutes);
 app.use("/api/opd" , OPDroutes)
+app.use("/api/icu" , ICUroutes)
 
 
 const server = http.createServer(app);
