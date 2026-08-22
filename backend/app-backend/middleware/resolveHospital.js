@@ -1,29 +1,30 @@
 import Hospital from "../models/Hospital.js";
 
-// Must run AFTER `protect` (needs req.user). Attaches req.hospitalId so
-// downstream controllers never have to trust a hospitalId the client sent
-// in the body/query — that would let one hospital's staff/admin read or
-// write another hospital's data just by changing a value in the request.
-//
-//   - staff: hospitalId is stored directly on the Staff row (set at
-//     signupStaff time from the invite token).
-//   - admin: hospitalId isn't stored on the User at all — it's resolved
-//     via Hospital.adminId, same lookup as getmyhospital().
+// accountType is "admin" or "staff" — pass req.accountType (set by
+// protect) or the literal type you already know at login/signup time.
+// Deliberately does NOT infer this from account.role anymore — that field
+// is a job title now, not an account-kind signal.
+export const resolveHospitalId = async (account, accountType) => {
+  if (accountType === "staff") {
+    return account.hospitalId || null;
+  }
+  const hospital = await Hospital.findOne({ where: { adminId: account.id } });
+  return hospital ? hospital.id : null;
+};
+
+// Express middleware. Must run AFTER `protect` (needs req.user, req.accountType).
 export const attachHospitalId = async (req, res, next) => {
   try {
-    if (req.user.role === "staff") {
-      if (!req.user.hospitalId) {
-        return res.status(403).json({ message: "This staff account isn't linked to a hospital" });
-      }
-      req.hospitalId = req.user.hospitalId;
-      return next();
+    const hospitalId = await resolveHospitalId(req.user, req.accountType);
+    if (!hospitalId) {
+      return res.status(403).json({
+        message:
+          req.accountType === "staff"
+            ? "This staff account isn't linked to a hospital"
+            : "No hospital is registered for this account yet",
+      });
     }
-
-    const hospital = await Hospital.findOne({ where: { adminId: req.user.id } });
-    if (!hospital) {
-      return res.status(403).json({ message: "No hospital is registered for this account yet" });
-    }
-    req.hospitalId = hospital.id;
+    req.hospitalId = hospitalId;
     next();
   } catch (err) {
     console.error("attachHospitalId error:", err);

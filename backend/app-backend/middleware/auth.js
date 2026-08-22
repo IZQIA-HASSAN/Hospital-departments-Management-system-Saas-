@@ -11,8 +11,11 @@ export const protect = async (req, res, next) => {
     const token = header.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    // decoded.type is "admin" or "staff" — which table to query. This is
+    // NOT the same thing as a business role/job title (Staff.role), which
+    // can change independently without breaking login.
     const account =
-      decoded.role === "staff"
+      decoded.type === "staff"
         ? await Staff.findByPk(decoded.id)
         : await User.findByPk(decoded.id);
 
@@ -21,6 +24,7 @@ export const protect = async (req, res, next) => {
     }
 
     req.user = account;
+    req.accountType = decoded.type === "staff" ? "staff" : "admin";
     next();
   } catch (err) {
     console.error("protect middleware error:", err);

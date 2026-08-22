@@ -1,6 +1,7 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/db.js";
 import User from "./User.js";
+import Staff from "./Staff.js"
 
 const Hospital = sequelize.define(
   "Hospital",
@@ -29,7 +30,7 @@ Hospital.belongsTo(User, { foreignKey: "adminId", as: "admin" });
 
 //  one hospital can have many staff members 
 
-Hospital.hasMany(User , {foreignKey:"hospitalId" , as :"staff"})
-User.belongsTo(Hospital,{foreignKey : "hospitalId" , as:"employer"})
+Hospital.hasMany(Staff , {foreignKey:"hospitalId" , as :"staff"})
+Staff.belongsTo(Hospital,{foreignKey : "hospitalId" , as:"hospital"})
 
 export default Hospital;

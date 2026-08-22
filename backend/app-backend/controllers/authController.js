@@ -3,11 +3,13 @@ import generateToken from "../utils/generateToken.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import Staff from "../models/Staff.js";
-import { sendEmail } from "../utils/sendEmail.js"; // uncomment/add this — no // in front
+import { sendEmail } from "../utils/sendEmail.js";
+import { resolveHospitalId } from "../middleware/Resolvehospital.js";
+// uncomment/add this — no // in front
 
 export const signup = async (req, res) => {
   try {
-    const { name, email, password, role, title } = req.body;
+    const { name, email, password, title } = req.body;
 
     if (!name || !email || !password || !title) {
       return res.status(400).json({ message: "All fields are required" });
@@ -21,11 +23,11 @@ export const signup = async (req, res) => {
       email,
       password,
       title,
-      role: role === "admin" ? "admin" : "staff",
+      role: "admin",
     });
-    console.log("uuer created", user.name, user.email)
+    console.log("uuer created", user.name, user.email, user.role)
 
-    const token = generateToken(user);
+    const token = generateToken(user, "admin");
     res.status(201).json({
       token,
       user: { id: user.id, name: user.name, email: user.email, role: user.role, title: user.title },
@@ -36,28 +38,7 @@ export const signup = async (req, res) => {
   }
 };
 
-// export const login = async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
-//     const user = await User.findOne({ where: { email } });
 
-//     if (!user || !(await user.matchPassword(password))) {
-//       return res.status(401).json({ message: "Invalid email or password" });
-//     }
-
-//     const token = generateToken(user);
-//     res.json({
-//       token,
-//       user: { id: user.id, name: user.name, email: user.email, role: user.role, title: user.title },
-
-//     });
-//     console.log(token)
-//     console.log("user logged in")
-//   } catch (err) {
-//     res.status(500).json({ message: "Server error", error: err.message });
-//     console.log(err.message)
-//   }
-// };
 
 // verifying invite token 
 export const verifyInvite = async (req, res) => {
@@ -70,7 +51,7 @@ export const verifyInvite = async (req, res) => {
   }
 };
 
-// import Staff from "../models/Staff.js"; // ADDED
+
 
 // ...
 
@@ -101,22 +82,29 @@ export const signupStaff = async (req, res) => {
       hospitalId: decoded.hospitalId,
     });
 
-    const sessionToken = jwt.sign(
-      { id: staff.id, email: staff.email, role: staff.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "20d" }
-    );
+    const sessionToken = generateToken(staff, "staff")
+
+
 
     // ADDED: notify any admin dashboards live, same as addstaff used to
-    const io = req.app.get('io');
-    if (io) io.emit('staff:added', {
-      id: staff.id,
-      name: staff.name,
-      email: staff.email,
-      role: staff.role,
-      isOnline: staff.isOnline,
-      lastSeen: staff.lastSeen,
-    });
+    const io = req.app.get("io");
+    if (io) {
+      io.to(`hospital:${staff.hospitalId}`).emit("staff:added", {
+        id: staff.id,
+        name: staff.name,
+        email: staff.email,
+        role: staff.role,
+        isOnline: staff.isOnline,
+        lastSeen: staff.lastSeen,
+      });
+    }
+    //  await notifyHospital(io, {
+    //   hospitalId: staff.hospitalId,
+    //   type: "staff_joined",
+    //   title: `${staff.name} joined the team`,
+    //   priority: "normal",
+    //   metadata: { staffId: staff.id },
+    // });
 
     console.log(`new staff account created: ${staff.email}`);
 
@@ -139,49 +127,7 @@ export const signupStaff = async (req, res) => {
   }
 };
 
-// export const stafflogin = async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
 
-//     if (!email || !password) {
-//       return res.status(400).json({ message: "Email and password are required" });
-//     }
-
-//     // FIX: look up Staff, not User
-//     const staff = await Staff.findOne({ where: { email } });
-//     if (!staff) {
-//       return res.status(400).json({ message: "Invalid email or password" });
-//     }
-
-//     // FIX: compare against passwordHash, matching the Staff model's field name
-//     const passwordMatch = await bcrypt.compare(password, staff.passwordHash);
-//     if (!passwordMatch) {
-//       return res.status(400).json({ message: "Invalid email or password" });
-//     }
-
-//     const token = jwt.sign(
-//       { id: staff.id, email: staff.email, role: staff.role },
-//       process.env.JWT_SECRET,
-//       { expiresIn: "1d" }
-//     );
-
-//     console.log(`staff member logged in: ${staff.email}`);
-
-//     return res.status(200).json({
-//       message: "Login successful",
-//       token,
-//       user: {
-//         id: staff.id,
-//         name: staff.name,
-//         email: staff.email,
-//         role: staff.role,
-//       },
-//     });
-//   } catch (err) {
-//     console.error("stafflogin error:", err);
-//     return res.status(500).json({ message: "Something went wrong. Please try again." });
-//   }
-// };
 
 // at first there werre seperate logins for staff and admin but now login will only be one and signups differerent as they follow differernt architecture
 
@@ -196,7 +142,22 @@ export const unifiedLogin = async (req, res) => {
     // Try admin/User table first
     const user = await User.findOne({ where: { email } });
     if (user && (await user.matchPassword(password))) {
-      const token = generateToken(user);
+      const token = generateToken(user, "admin");
+
+      const hospitalId = await resolveHospitalId(user, "admin")
+      if(!hospitalId){
+        return res.status(403).json({message : "this user does not exist for the hospital"})
+      }
+      // if (hospitalId) {
+      //   await notifyHospital(io, {
+      //     hospitalId,
+      //     type: "staff_login",
+      //     title: `${user.name} logged in`,
+      //     priority: "normal",
+      //     metadata: { userId: user.id },
+      //   });
+      // }
+      console.log("user has logged in")
       return res.json({
         token,
         user: { id: user.id, name: user.name, email: user.email, role: user.role, title: user.title },
@@ -206,7 +167,18 @@ export const unifiedLogin = async (req, res) => {
     // Fall back to Staff table
     const staff = await Staff.findOne({ where: { email } });
     if (staff && (await bcrypt.compare(password, staff.passwordHash))) {
-      const token = generateToken(staff)
+      const token = generateToken(staff , "staff")
+      const hospitalid = await resolveHospitalId(staff , "staff")
+      if(!hospitalid){
+        return res.status(403).json({message :  "Staff does not exist for this hospital"})
+        //  await notifyHospital(io, {
+        //   hospitalId,
+        //   type: "staff_login",
+        //   title: `${staff.name} logged in`,
+        //   priority: "normal",
+        //   metadata: { staffId: staff.id },
+        // });
+      }
       return res.json({
         token,
         user: { id: staff.id, name: staff.name, email: staff.email, role: staff.role },
@@ -220,10 +192,27 @@ export const unifiedLogin = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 }
+// logout function needs attention
+
+// export const logout = async(req, res)=>{
+//   try{
+
+//     const io = req.app.get("io")
+//     const hospitalId = await resolveHospitalId(req.user , req.accounttype)
+//     if(hospitalId){
+      
+//     }
+
+//   }catch(err){
+
+//   }
+// }
+
 
 // forgot password controller 
 
-export const forgotPassword =async (req, res) => {
+
+export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) {
@@ -236,7 +225,7 @@ export const forgotPassword =async (req, res) => {
     const user = await User.findOne({ where: { email } })
     let staff = null;
     if (!user) {
-       staff =await  Staff.findOne({ where: { email } })
+      staff = await Staff.findOne({ where: { email } })
 
     }
     const account = user || staff

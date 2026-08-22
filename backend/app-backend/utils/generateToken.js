@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 
-const generateToken = (user) =>
-  jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
+const generateToken = (account , accountType) =>
+  jwt.sign({ id: account.id ,type:accountType }, process.env.JWT_SECRET, {
     expiresIn: "20d",
   });
 

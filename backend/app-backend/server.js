@@ -1,15 +1,14 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import http from "http"; // ADDED: needed to create the raw server Socket.io attaches to
-import { Server } from "socket.io";
+import http from "http";
 import sequelize from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import Hospitalroutes from "./routes/Hospitalroutes.js";
 import Staffroutes from "./routes/Staffroutes.js";
 import initsocket from "./utils/Socketmanager.js";
-import OPDroutes from "./routes/OPDroutes.js"
-import ICUroutes from "./routes/ICUroutes.js"
+import OPDroutes from "./routes/OPDroutes.js";
+import ICUroutes from "./routes/ICUroutes.js";
 
 const app = express();
 
@@ -19,26 +18,17 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/hospitals", Hospitalroutes);
 app.use("/api/staff", Staffroutes);
-app.use("/api/opd" , OPDroutes)
-app.use("/api/icu" , ICUroutes)
-
+app.use("/api/opd", OPDroutes);
+app.use("/api/icu", ICUroutes);
 
 const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: { origin: process.env.CLIENT_URL || "http://localhost:5173" },
-});
-
-// Make io available inside controllers via req.app.get('io')
-app.set("io", io);
-
-initsocket(io);
+initsocket(server); // FIXED: this was imported but never called — Socket.io was never actually running
 
 sequelize
   .authenticate()
   .then(() => {
     console.log("Postgres connected");
-    return sequelize.sync(); // ADD THIS — creates any missing tables from your models
+    return sequelize.sync();
   })
   .then(() => {
     console.log("Models synced");
