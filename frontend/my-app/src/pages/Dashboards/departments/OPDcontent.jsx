@@ -23,6 +23,16 @@ const EMPTY_FORM = {
 
 // --- API functions -------------------------------------------------------
 
+// OPD routes previously had no auth. They now require it, same as ICU —
+// every call below needs a Bearer token or it 401s.
+function authHeaders(extra = {}) {
+  const token = localStorage.getItem("token");
+  return {
+    ...extra,
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 // GET requests can't carry a body — filters go in the query string instead
 async function getallvisits({ date, status, department } = {}) {
   const params = new URLSearchParams();
@@ -30,7 +40,9 @@ async function getallvisits({ date, status, department } = {}) {
   if (status) params.set("status", status);
   if (department) params.set("department", department);
 
-  const res = await fetch(`${API_BASE}?${params.toString()}`);
+  const res = await fetch(`${API_BASE}?${params.toString()}`, {
+    headers: authHeaders(),
+  });
   if (!res.ok) throw new Error("Something went wrong fetching visits");
   const data = await res.json();
   return data.visits || [];
@@ -39,34 +51,43 @@ async function getallvisits({ date, status, department } = {}) {
 async function registervisit(payload) {
   const res = await fetch(`${API_BASE}/register-visit`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
   });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.message || "Registration failed");
-  }
-  return res.json();
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || data.error || "Registration failed");
+  return data;
 }
 
 async function updateopdvisit({ id, status }) {
   const res = await fetch(`${API_BASE}/update-visit-status/${id}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ status }),
   });
-  if (!res.ok) throw new Error("Failed to update status");
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || data.error || "Failed to update status");
+  }
   return res.json();
 }
 
 async function deletevisit({ id }) {
-  const res = await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
-  if (!res.ok) throw new Error("Failed to delete visit");
+  const res = await fetch(`${API_BASE}/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || data.error || "Failed to delete visit");
+  }
   return res.json();
 }
 
 async function getvisitbyID({ id }) {
-  const res = await fetch(`${API_BASE}/getopd-vist/${id}`);
+  const res = await fetch(`${API_BASE}/getopd-vist/${id}`, {
+    headers: authHeaders(),
+  });
   if (!res.ok) throw new Error("Failed to fetch visit");
   const data = await res.json();
   return data.visit;
