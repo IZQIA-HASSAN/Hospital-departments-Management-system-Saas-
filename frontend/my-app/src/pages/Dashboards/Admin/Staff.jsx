@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Mail } from "lucide-react";
-import socket from "../../../socket.js";
+import socket , {connectSocket} from "../../../socket.js";
 
 export async function fetchStaff() {
   const res = await fetch("http://localhost:5000/api/staff", {
@@ -75,7 +75,8 @@ export default function Staff() {
   });
 
   useEffect(() => {
-    socket.connect();
+    // socket.connect();
+    connectSocket()
 
     const onStatusChanged = ({ id, isOnline }) => {
       queryClient.setQueryData(["staff"], (old = []) =>

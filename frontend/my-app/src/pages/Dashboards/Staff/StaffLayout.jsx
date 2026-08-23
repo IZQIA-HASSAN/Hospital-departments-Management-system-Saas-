@@ -10,6 +10,7 @@ import {
   Stethoscope,
   ChevronDown,
 } from "lucide-react";
+import { useSocketConnection } from "../../../useSocketConnection";
 
 const DEPARTMENT_OPTIONS = [
   { label: "OPD", slug: "opd" },
@@ -18,6 +19,7 @@ const DEPARTMENT_OPTIONS = [
 ];
 
 export default function StaffLayout() {
+  useSocketConnection()
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);

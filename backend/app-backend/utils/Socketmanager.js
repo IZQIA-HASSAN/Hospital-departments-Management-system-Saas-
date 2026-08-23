@@ -16,7 +16,21 @@ async function resolveHospitalId(account, accountType) {
   return hospital?.id || null;
 }
 
-export default function initsocket(httpServer) {
+export default async function initsocket(httpServer) {
+  // Any staff row still marked online from before this process started is
+  // guaranteed stale — a socket connected to the previous process instance
+  // (killed by a nodemon restart, crash, or deploy) can't still be alive
+  // here. Without this, isOnline gets stuck "true" forever whenever the
+  // server dies before a clean disconnect fires.
+  try {
+    await Staff.update(
+      { isOnline: false, socketId: null },
+      { where: { isOnline: true } }
+    );
+  } catch (err) {
+    console.error("Failed to reset stale staff presence on startup:", err.message);
+  }
+
   const io = new Server(httpServer, {
     cors: {
       origin: process.env.FRONTEND_URL,
@@ -60,6 +74,13 @@ export default function initsocket(httpServer) {
           { isOnline: true, socketId: socket.id, lastSeen: new Date() },
           { where: { id: socket.user.id } }
         );
+        // FIX: this update was never announced to anyone — the admin's
+        // staff list listens for exactly this event and had nothing to
+        // listen to.
+        io.to(`hospital:${socket.hospitalId}`).emit("staff:statusChanged", {
+          id: socket.user.id,
+          isOnline: true,
+        });
       } catch (err) {
         console.error("socket presence update (connect) failed:", err.message);
       }
@@ -68,10 +89,21 @@ export default function initsocket(httpServer) {
     socket.on("disconnect", async () => {
       if (socket.accountType !== "staff") return;
       try {
-        await Staff.update(
+        const [updatedCount] = await Staff.update(
           { isOnline: false, lastSeen: new Date() },
           { where: { id: socket.user.id, socketId: socket.id } }
         );
+        // Only announce "offline" if this disconnect actually cleared the
+        // row — if the staff member already reconnected on a different
+        // socket before this one disconnected, the WHERE clause matches
+        // zero rows (socketId no longer matches) and we must NOT announce
+        // offline, since they're still genuinely online via the newer socket.
+        if (updatedCount > 0) {
+          io.to(`hospital:${socket.hospitalId}`).emit("staff:statusChanged", {
+            id: socket.user.id,
+            isOnline: false,
+          });
+        }
       } catch (err) {
         console.error("socket presence update (disconnect) failed:", err.message);
       }

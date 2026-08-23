@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Bell, Clock, CalendarCheck } from "lucide-react";
-import socket from "../../../socket";
 
 export default function StaffDash() {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -16,29 +15,15 @@ export default function StaffDash() {
   // TODO: replace with real notifications data later
   const notifications = [];
 
-  // socket connection for activity status
-    useEffect(() => {
-    if (!user?.id) return;
-
-    socket.connect();
-    socket.emit("staff:online", user.id);
-
-    // Optional but recommended: re-announce if the socket reconnects
-    // (e.g. after a network blip), since a fresh connection means the
-    // backend lost the old socket.id -> staffId mapping.
-    const onConnect = () => {
-      socket.emit("staff:online", user.id);
-    };
-    socket.on("connect", onConnect);
-
-    return () => {
-      socket.off("connect", onConnect);
-      socket.disconnect();
-    };
-  }, [user?.id]);
-
-  // ...rest of your component stays the same
-
+  // NOTE: socket connection management was removed from here entirely.
+  // It now lives solely in StaffLayout.jsx via useSocketConnection() —
+  // that component wraps every staff tab and never unmounts on
+  // navigation, so the connection stays alive for the whole session.
+  // Having it here too meant every tab switch away from Dashboard called
+  // socket.disconnect() on the shared singleton, killing the connection
+  // the layout depended on. If this page needs to LISTEN for socket
+  // events (not manage the connection), add a separate useEffect here
+  // with only socket.on(...)/socket.off(...) — no connect()/disconnect().
 
   return (
     <div>
