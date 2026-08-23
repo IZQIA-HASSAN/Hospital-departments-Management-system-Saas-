@@ -34,8 +34,9 @@ export const registeropdvisit = async (req, res) => {
             tokenNumber: tokennumber ,
             visitDate: today,
             status: "waiting",
+            hospitalId: req.hospitalId, // FIX: was never included — this is what threw the notNull violation
         })
-        return res.status(201).json({ message: "opd visit registered successfully" })
+        return res.status(201).json({ message: "opd visit registered successfully", visit })
 
     } catch (err) {
         console.log("an err occured while registereing", err)
@@ -50,7 +51,7 @@ export const getopdvisits = async (req, res) => {
     try {
         const { date, status, department } = req.query
 
-        const where = {}
+        const where = { hospitalId: req.hospitalId } // scope to this hospital, same as the rest of the app now does
 
         if (date) where.visitDate = date;
         if (status) where.status = status;
@@ -80,6 +81,9 @@ export const getOPDVisitById = async (req, res) => {
         if (!visit) {
             return res.status(404).json({ message: "OPD visit not found" });
         }
+        if (visit.hospitalId !== req.hospitalId) {
+            return res.status(404).json({ message: "OPD visit not found" }); // don't leak that it exists in another hospital
+        }
 
         return res.status(200).json({ visit });
     } catch (err) {
@@ -104,7 +108,7 @@ export const updatevisitstatus = async (req, res) => {
         }
 
         const visit = await OPDVisit.findByPk(id);
-        if (!visit) {
+        if (!visit || visit.hospitalId !== req.hospitalId) {
             return res.status(404).json({ message: "OPD visit not found" });
         }
 
@@ -127,6 +131,7 @@ export const todayslivequeue = async (req, res) => {
         const queue = await OPDVisit.findAll({
             where: {
                 visitDate: today,
+                hospitalId: req.hospitalId,
                 status: { [Op.in]: ["waiting", "in-progress"] },
             },
             order: [["tokenNumber", "ASC"]]
@@ -146,7 +151,7 @@ export const deleterecord = async (req, res)=>{
 
         const visit = await OPDVisit.findByPk(id)
 
-            if(!visit){
+            if(!visit || visit.hospitalId !== req.hospitalId){
                 return res.status(404).json({message : "requested visit not found"})
             }
 
