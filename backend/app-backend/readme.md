@@ -11,6 +11,7 @@ some features need to be checked
  code reviewed and wokring on solutions for the problems that are going to occur 
 
  nothing done today , been busy 
+ 
 
 
  some of the issues are resolved for login and signup but have to make them solid 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState  , useMemo, useEffect} from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { BedDouble, HeartPulse, UserRound } from "lucide-react";
 
@@ -112,6 +112,8 @@ const ICUcontent = () => {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [search , setSearch] = useState("")
+  const [debouncedsearch , setDebouncedsearch] = useState("")
 
   // No hospitalId here — the backend resolves it from the logged-in
   // user's token (see middleware/resolveHospital.js), so every user only
@@ -191,6 +193,22 @@ const ICUcontent = () => {
   const occupied = beds.filter((b) => b.status === "occupied");
   const critical = occupied.filter((b) => b.severity === "critical").length;
 
+// debouncing here
+useEffect(()=>{
+  const timer = setTimeout(()=> {
+    setDebouncedsearch(search)
+  }, 300)
+  return ()=>clearTimeout(timer)
+}, [search])
+  
+const filtered = useMemo(
+  () =>
+    beds.filter((bed) =>
+      (bed.patientName ?? "").toLowerCase().includes(debouncedsearch.toLowerCase())
+    ),
+  [beds, debouncedsearch]
+);
+
   const error =
     (isError && "Couldn't load ICU beds. Try refreshing.") ||
     addMutation.error?.message ||
@@ -201,6 +219,7 @@ const ICUcontent = () => {
 
   return (
     <div>
+    <input className="border" type="text" placeholder="search patient name" value={search} onChange={(e)=> setSearch(e.target.value)} />
       <div className="mb-4 flex items-center justify-end">
         <button
           onClick={() => setShowForm((s) => !s)}
@@ -280,7 +299,7 @@ const ICUcontent = () => {
           </div>
         ) : (
           <ul className="divide-y divide-neutral-100">
-            {beds.map((bed) => (
+            {filtered.map((bed) => (
               <li key={bed.id} className="flex items-center justify-between px-6 py-4">
                 <div className="flex items-center gap-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-700 text-sm font-bold text-white">
