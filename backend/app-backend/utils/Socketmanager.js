@@ -38,6 +38,8 @@ export default async function initsocket(httpServer) {
     },
   });
 
+
+  // socket level equivilent of express midlleware , nearly same work as middleware does in express
   io.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth?.token;
@@ -63,6 +65,9 @@ export default async function initsocket(httpServer) {
     }
   });
 
+
+  // fires once per successful connection
+  
   io.on("connection", async (socket) => {
     socket.join(`hospital:${socket.hospitalId}`);
 

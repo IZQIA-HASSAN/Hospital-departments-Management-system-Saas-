@@ -1,6 +1,7 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/db.js";
 import Hospital from "./Hospital.js";
+import Staff from "./Staff.js";
 
 const Notification = sequelize.define(
   "Notification",
@@ -56,9 +57,8 @@ const Notification = sequelize.define(
 
 );
 
-Notification.associate = (models) => {
-  Notification.belongsTo(models.Hospital, { foreignKey: "hospitalId" });
-  Notification.belongsTo(models.Staff, { foreignKey: "createdBy", as: "author" });
 
-  return Notification;
-};
+ Notification.belongsTo(Hospital, { foreignKey: "hospitalId" });
+Notification.belongsTo(Staff, { foreignKey: "createdBy", as: "author" });
+
+export default Notification;

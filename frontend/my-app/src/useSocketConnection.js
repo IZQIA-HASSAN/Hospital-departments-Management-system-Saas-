@@ -1,9 +1,3 @@
-// client/useSocketConnection.js
-//
-// Call this ONCE, in your root layout component (the one that stays mounted
-// while tab content swaps in and out) — never inside an individual tab/page.
-// That's the whole fix: the socket's lifetime should match "is this person
-// logged in", not "is this specific tab currently rendered".
 
 import { useEffect } from "react";
 import socket, { connectSocket } from "./socket.js"; // adjust path to match your project

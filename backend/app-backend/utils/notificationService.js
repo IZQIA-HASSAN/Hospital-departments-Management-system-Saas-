@@ -1,26 +1,25 @@
-import Notification from "../models/Notification.js"
+// server/utils/notificationService.js
+import Notification from "../models/Notification.js";
+import { getIO } from "./Socketmanager.js";
 
-let io = null;
-function initnotify(socketioinstance) {
-    io = socketioinstance
-}
+export const notify = async ({ hospitalId, type, message, severity = "info", meta = {}, createdBy }) => {
+  const notification = await Notification.create({
+    hospitalId,
+    type,
+    message,
+    severity,
+    meta,
+    createdBy,
+  });
 
-async function notify({ hospitalId, type, message, severity = "info", meta = {}, createdBy }) {
-    const notifications = await Notification.create({
-        hospitalId,
-        type,
-        message,
-        severity,
-        meta,
-        createdBy,
-    });
+  try {
+    const io = getIO();
+    io.to(`hospital:${hospitalId}`).emit("notification:new", notification);
+  } catch (err) {
+    // getIO() throws if socket.io hasn't initialized yet — don't let that
+    // crash the HTTP request; the notification is already saved either way
+    console.error("Failed to emit notification over socket:", err.message);
+  }
 
-    if(io){
-        io.to(`hospital:${hospitalId}`).emit("notification:new", notifications)
-    }
-
-    return notifications
-}
-
-
-export default {initnotify , notify}
+  return notification;
+};

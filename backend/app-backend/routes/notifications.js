@@ -1,14 +1,14 @@
 import express from "express"
 import {protect} from "../middleware/auth.js"
-import {resolveHospitalId} from  "../middleware/resolveHospital.js"
+import {attachHospitalId} from  "../middleware/resolveHospital.js"
 import Notification from "../models/Notification.js"
-import {notify , initnotify}  from  "../utils/notificationService.js"
+import {notify }  from  "../utils/notificationService.js"
 import { Op } from "sequelize"
 
 
 const router = express.Router()
 
-router.use(protect , resolveHospitalId)
+router.use(protect , attachHospitalId)
 
 router.get("/" , async(req ,res)=>{
     const {unreadOnly , limit = 30} = req.query
