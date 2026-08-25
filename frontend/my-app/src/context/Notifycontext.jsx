@@ -1,10 +1,11 @@
 // src/context/NotificationContext.jsx
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { getSocket } from "../lib/socket";
+import socket from "../socket.js";                          // the shared instance
+import { useSocketConnection } from "../useSocketConnection.js"; // handles connect/disconnect lifecycle
 
 const NotificationContext = createContext(null);
 
-const API_BASE = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/notifications`;
+const API_BASE = "http://localhost:5000/api/notifications";
 
 function authHeaders(extra = {}) {
   const token = localStorage.getItem("token");
@@ -15,7 +16,12 @@ export function NotificationProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch history once, when the provider mounts (i.e. once per dashboard session)
+  // This hook owns connect-on-mount / disconnect-on-unmount for the socket.
+  // Since NotificationProvider wraps your whole admin dashboard layout,
+  // this effectively means: connect on dashboard load, disconnect on logout.
+  useSocketConnection();
+
+  // Fetch notification history once
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -32,23 +38,14 @@ export function NotificationProvider({ children }) {
     return () => { cancelled = true; };
   }, []);
 
-  // One socket connection for the whole dashboard, not one per section
+  // Listen for live pushes. Separate effect from useSocketConnection —
+  // that hook owns connect/disconnect, this one just owns this one listener.
   useEffect(() => {
-    const socket = getSocket();
-    socket.connect();
-
     function handleNew(notification) {
       setNotifications((prev) => [notification, ...prev]);
     }
-
     socket.on("notification:new", handleNew);
-    socket.on("connect_error", (err) => console.error("Socket connect error:", err.message));
-
-    return () => {
-      socket.off("notification:new", handleNew);
-      // Don't disconnect here — provider unmounting on route change
-      // shouldn't kill the connection; only logout should (see socket.js)
-    };
+    return () => socket.off("notification:new", handleNew);
   }, []);
 
   const markOneRead = useCallback(async (id) => {
@@ -72,9 +69,7 @@ export function NotificationProvider({ children }) {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
-    <NotificationContext.Provider
-      value={{ notifications, unreadCount, loading, markOneRead, markAllRead }}
-    >
+    <NotificationContext.Provider value={{ notifications, unreadCount, loading, markOneRead, markAllRead }}>
       {children}
     </NotificationContext.Provider>
   );
@@ -82,8 +77,6 @@ export function NotificationProvider({ children }) {
 
 export function useNotifications() {
   const ctx = useContext(NotificationContext);
-  if (!ctx) {
-    throw new Error("useNotifications must be used inside a <NotificationProvider>");
-  }
+  if (!ctx) throw new Error("useNotifications must be used inside a <NotificationProvider>");
   return ctx;
 }
