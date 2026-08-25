@@ -9,6 +9,7 @@ import Staffroutes from "./routes/Staffroutes.js";
 import initsocket from "./utils/Socketmanager.js";
 import OPDroutes from "./routes/OPDroutes.js";
 import ICUroutes from "./routes/ICUroutes.js";
+import notifications from "./routes/notifications.js"
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use("/api/hospitals", Hospitalroutes);
 app.use("/api/staff", Staffroutes);
 app.use("/api/opd", OPDroutes);
 app.use("/api/icu", ICUroutes);
+app.use("/api/notifications" ,notifications)
 
 const server = http.createServer(app);
 initsocket(server); // FIXED: this was imported but never called — Socket.io was never actually running
