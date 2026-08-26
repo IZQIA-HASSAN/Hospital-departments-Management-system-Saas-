@@ -11,7 +11,7 @@ import {
 } from "../controllers/ICUcontroller.js";
 import { protect } from "../middleware/auth.js";
 import { authorize } from "../middleware/checkRole.js";
-import { attachHospitalId } from "../middleware/Resolvehospital.js";
+import { attachHospitalId } from "../middleware/resolveHospital.js";
 
 // This router assumes it is mounted as:
 //   app.use("/api/icu", icuRouter);

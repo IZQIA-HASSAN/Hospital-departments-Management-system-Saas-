@@ -4,7 +4,8 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import Staff from "../models/Staff.js";
 import { sendEmail } from "../utils/sendEmail.js";
-import { resolveHospitalId } from "../middleware/Resolvehospital.js";
+import { resolveHospitalId } from "../middleware/resolveHospital.js";
+import { notify } from "../utils/notificationService.js";
 // uncomment/add this — no // in front
 
 export const signup = async (req, res) => {
@@ -144,20 +145,12 @@ export const unifiedLogin = async (req, res) => {
     if (user && (await user.matchPassword(password))) {
       const token = generateToken(user, "admin");
 
-      const hospitalId = await resolveHospitalId(user, "admin")
-      if(!hospitalId){
-        return res.status(403).json({message : "this user does not exist for the hospital"})
+      const hospitalId = await resolveHospitalId(user, "admin");
+      if (!hospitalId) {
+        return res.status(403).json({ message: "this user does not exist for the hospital" });
       }
-      // if (hospitalId) {
-      //   await notifyHospital(io, {
-      //     hospitalId,
-      //     type: "staff_login",
-      //     title: `${user.name} logged in`,
-      //     priority: "normal",
-      //     metadata: { userId: user.id },
-      //   });
-      // }
-      console.log("user has logged in")
+
+      console.log("user has logged in");
       return res.json({
         token,
         user: { id: user.id, name: user.name, email: user.email, role: user.role, title: user.title },
@@ -167,18 +160,23 @@ export const unifiedLogin = async (req, res) => {
     // Fall back to Staff table
     const staff = await Staff.findOne({ where: { email } });
     if (staff && (await bcrypt.compare(password, staff.passwordHash))) {
-      const token = generateToken(staff , "staff")
-      const hospitalid = await resolveHospitalId(staff , "staff")
-      if(!hospitalid){
-        return res.status(403).json({message :  "Staff does not exist for this hospital"})
-        //  await notifyHospital(io, {
-        //   hospitalId,
-        //   type: "staff_login",
-        //   title: `${staff.name} logged in`,
-        //   priority: "normal",
-        //   metadata: { staffId: staff.id },
-        // });
+      const token = generateToken(staff, "staff");
+      const hospitalId = await resolveHospitalId(staff, "staff");
+      if (!hospitalId) {
+        return res.status(403).json({ message: "Staff does not exist for this hospital" });
       }
+
+      // Fire-and-forget: don't await this, and don't let it block/fail the login.
+      // Must run BEFORE the return below, and inside this if-block, or it never executes.
+      notify({
+        hospitalId,
+        type: "staff_login",
+        message: `${staff.name} logged in`,
+        severity: "info",
+        meta: { staffId: staff.id },
+        createdBy: staff.id,
+      }).catch((err) => console.error("failed to create login notification:", err.message));
+
       return res.json({
         token,
         user: { id: staff.id, name: staff.name, email: staff.email, role: staff.role },
@@ -191,121 +189,130 @@ export const unifiedLogin = async (req, res) => {
     console.error("unifiedLogin error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
-}
+};
 // logout function needs attention
 
-// export const logout = async(req, res)=>{
-//   try{
-
-//     const io = req.app.get("io")
-//     const hospitalId = await resolveHospitalId(req.user , req.accounttype)
-//     if(hospitalId){
-      
-//     }
-
-//   }catch(err){
-
-//   }
-// }
-
-
-// forgot password controller 
-
-
-export const forgotPassword = async (req, res) => {
+export const logout = async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: "email is required" })
-
+    if (req.accounttype === "staff") {
+      const hospitalId = await resolveHospitalId(req.user, "staff")
+      if (hospitalId) {
+        notify({
+          hospitalId,
+          type: "staff_logout",
+          message: `${req.user.name} logged out`,
+          severity: "info",
+          meta: { staffId: req.user.id },
+          createdBy: req.user.id,
+        }).catch((err) => console.error("failed to notify thee staff memeber", err.message))
+      }
     }
 
-    // now check both tables to find the correct email to send invite link
+    return res.status(200).json({ message: "logged out" })
+  } catch (err) {
+    console.error("logout error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+}
 
-    const user = await User.findOne({ where: { email } })
-    let staff = null;
-    if (!user) {
-      staff = await Staff.findOne({ where: { email } })
 
-    }
-    const account = user || staff
-    const accounttype = user ? "user" : "staff"
-    if (!account) {
-      return res.status(200).json({
-        message: "If that email is registered, a reset link has been sent.",
-      });
-    }
+  // forgot password controller 
 
-    const resetToken = jwt.sign(
-      { id: account.id, type: accounttype, purpose: "password-reset" },
-      process.env.JWT_RESET_SECRET,
-      { expiresIn: "15m" }
-    )
 
-    const link = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+  export const forgotPassword = async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "email is required" })
 
-    await sendEmail({
-      to: email,
-      subject: "Reset your Round password",
-      html: `
+      }
+
+      // now check both tables to find the correct email to send invite link
+
+      const user = await User.findOne({ where: { email } })
+      let staff = null;
+      if (!user) {
+        staff = await Staff.findOne({ where: { email } })
+
+      }
+      const account = user || staff
+      const accounttype = user ? "user" : "staff"
+      if (!account) {
+        return res.status(200).json({
+          message: "If that email is registered, a reset link has been sent.",
+        });
+      }
+
+      const resetToken = jwt.sign(
+        { id: account.id, type: accounttype, purpose: "password-reset" },
+        process.env.JWT_RESET_SECRET,
+        { expiresIn: "15m" }
+      )
+
+      const link = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+      await sendEmail({
+        to: email,
+        subject: "Reset your Round password",
+        html: `
         <p>You requested a password reset.</p>
         <p><a href="${link}">Click here to set a new password</a></p>
         <p>This link expires in 15 minutes. If you didn't request this, ignore this email.</p>
       `,
-    });
-    console.log(`password reset email sent to: ${email}`);
-    return res.status(200).json({
-      message: "If that email is registered, a reset link has been sent.",
-    });
-  } catch (err) {
-    console.error("forgotPassword error:", err);
-    res.status(500).json({ message: "Something went wrong. Please try again." });
-  }
-}
-
-// now resetting password
-
-export const resetPassword = async (req, res) => {
-  try {
-    const { token, password } = req.body;
-    if (!token || !password) {
-      return res.status(400).json({ message: "Token and new password are required" });
-    }
-    if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters" });
-    }
-
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_RESET_SECRET);
+      });
+      console.log(`password reset email sent to: ${email}`);
+      return res.status(200).json({
+        message: "If that email is registered, a reset link has been sent.",
+      });
     } catch (err) {
-      return res.status(400).json({ message: "Invalid or expired reset link" });
+      console.error("forgotPassword error:", err);
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
-
-    if (decoded.purpose !== "password-reset") {
-      return res.status(400).json({ message: "Invalid reset token" });
-    }
-
-    if (decoded.type === "user") {
-      const user = await User.findByPk(decoded.id);
-      if (!user) return res.status(400).json({ message: "Account not found" });
-      // Assumes User model hashes password automatically via a beforeSave hook,
-      // matching how signup/User.create() already handles it.
-      user.password = password;
-      await user.save();
-    } else {
-      const staff = await Staff.findByPk(decoded.id);
-      if (!staff) return res.status(400).json({ message: "Account not found" });
-      staff.passwordHash = await bcrypt.hash(password, 10);
-      await staff.save();
-    }
-
-    console.log(`password reset completed for ${decoded.type} id ${decoded.id}`);
-    return res.status(200).json({ message: "Password updated successfully" });
-  } catch (err) {
-    console.error("resetPassword error:", err);
-    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
-};
+
+  // now resetting password
+
+  export const resetPassword = async (req, res) => {
+    try {
+      const { token, password } = req.body;
+      if (!token || !password) {
+        return res.status(400).json({ message: "Token and new password are required" });
+      }
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      }
+
+      let decoded;
+      try {
+        decoded = jwt.verify(token, process.env.JWT_RESET_SECRET);
+      } catch (err) {
+        return res.status(400).json({ message: "Invalid or expired reset link" });
+      }
+
+      if (decoded.purpose !== "password-reset") {
+        return res.status(400).json({ message: "Invalid reset token" });
+      }
+
+      if (decoded.type === "user") {
+        const user = await User.findByPk(decoded.id);
+        if (!user) return res.status(400).json({ message: "Account not found" });
+        // Assumes User model hashes password automatically via a beforeSave hook,
+        // matching how signup/User.create() already handles it.
+        user.password = password;
+        await user.save();
+      } else {
+        const staff = await Staff.findByPk(decoded.id);
+        if (!staff) return res.status(400).json({ message: "Account not found" });
+        staff.passwordHash = await bcrypt.hash(password, 10);
+        await staff.save();
+      }
+
+      console.log(`password reset completed for ${decoded.type} id ${decoded.id}`);
+      return res.status(200).json({ message: "Password updated successfully" });
+    } catch (err) {
+      console.error("resetPassword error:", err);
+      res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+  };
 
 

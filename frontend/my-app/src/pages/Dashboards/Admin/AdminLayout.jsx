@@ -26,12 +26,27 @@ export default function AdminLayout() {
     catch { return null; }
   })();
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/login");
-  };
+  // const handleLogout = () => {
+  //   localStorage.removeItem("token");
+  //   localStorage.removeItem("user");
+  //   navigate("/login");
+  // };
 
+
+  const handleLogout = async ()=>{
+    try{
+       await fetch("http://localhost:5000/api/auth/logout" , {
+        method : "POST",
+        headers : {Authorization : `Bearer ${localStorage.getItem("token")}`},
+      })
+    }catch(err){
+console.error("Logout notification failed:", err);
+    }
+     localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  alert("user has been logout")
+  navigate("/login");
+  }
   const isActive = (path) => location.pathname === path;
 
   return (
