@@ -23,6 +23,7 @@ import RequireRole from "./components/RequireRole";
 
 import ResetPassword from "./pages/auth/ResetPassword"; // adjust path
 import OPDcontent from "./pages/Dashboards/departments/OPDcontent";
+import EmergencyPanel from "./components/EmergencyPanel";
 
 
 import "./App.css";
@@ -39,6 +40,7 @@ function App() {
       <Route path="/forgotpassword" element={<Forgotpassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/OPD-content" element={<OPDcontent/>}/>
+      <Route path="/Emergency-panel" element={<EmergencyPanel/>}/>
       {/* <Route path="/staff-login" element={<StaffLogin />} /> */}
 
       {/* Admin dashboard — guarded */}
