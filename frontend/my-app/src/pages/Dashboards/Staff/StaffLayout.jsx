@@ -40,10 +40,12 @@ export default function StaffLayout() {
 
   const handleLogout = async () => {
     try {
-      await fetch("http://localhost:5000/api/auth/logout", {
+     const res =  await fetch("http://localhost:5000/api/auth/logout", {
         method: "POST",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
+       const data = await res.json().catch(() => ({}));
+    console.log("Logout response:", res.status, data);
     } catch (err) {
       console.error("Logout notification failed:", err);
       // proceed with logout regardless — don't block the user from leaving
@@ -51,6 +53,7 @@ export default function StaffLayout() {
 
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    alert("staff has logged-out")
     navigate("/Login");
   };
 
