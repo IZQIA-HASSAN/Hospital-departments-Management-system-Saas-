@@ -23,7 +23,7 @@ import RequireRole from "./components/RequireRole";
 
 import ResetPassword from "./pages/auth/ResetPassword"; // adjust path
 import OPDcontent from "./pages/Dashboards/departments/OPDcontent";
-import EmergencyPanel from "./pages/Dashboards/departments/EmergencyPanel";
+import EmergencyPanel from "./components/EmergencyPanel";
 import EmergencyContent from "./pages/Dashboards/departments/EmergencyContent";
 
 

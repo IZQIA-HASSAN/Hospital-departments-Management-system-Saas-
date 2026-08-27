@@ -1,6 +1,6 @@
 
 import { Siren, Check } from "lucide-react";
-import { useEmergencyAlerts } from "../../../useEmergencyAlerts";
+import { useEmergencyAlerts } from "../useEmergencyAlerts";
 
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;

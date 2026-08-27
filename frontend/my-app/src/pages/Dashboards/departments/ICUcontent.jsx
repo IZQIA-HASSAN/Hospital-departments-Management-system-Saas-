@@ -282,8 +282,8 @@ const filtered = useMemo(
         </form>
       )}
 
-      <div className="rounded-xl border border-neutral-200 bg-white text-left shadow-sm">
-        <div className="flex items-center justify-between border-b border-neutral-100 px-6 py-4">
+      <div className="rounded-xl border border-neutral-200 bg-white text-left shadow-sm  h-80 overflow-y-scroll">
+        <div className="flex items-center justify-between border-b border-yellow-100 px-6 py-4">
           <h2 className="text-sm font-semibold text-neutral-700">ICU beds</h2>
           <span className="text-xs text-neutral-400">
             {occupied.length} occupied{critical > 0 ? ` · ${critical} critical` : ""}
