@@ -2,8 +2,9 @@ import { useParams } from "react-router-dom";
 import { Stethoscope, Activity, Siren } from "lucide-react";
 import OPDContent from "./OPDcontent";
 import ICUContent from "./ICUcontent";   
-import EmergencyPanel from "./EmergencyPanel"
+// import EmergencyPanel from "./EmergencyPanel"
 // import EmergencyContent from "./EmergencyContent"; // add when Emergency is built
+import EmergencyContent from "./EmergencyContent";
 
 const DEPARTMENT_LABELS = {
   opd: "OPD",
@@ -22,7 +23,8 @@ const DEPARTMENT_ICONS = {
 const DEPARTMENT_CONTENT = {
   opd: OPDContent,
   icu: ICUContent,
-  emergency: EmergencyPanel,
+  // emergency: EmergencyPanel,
+  emergency : EmergencyContent,
 };
 
 export default function DepartmentPage() {
