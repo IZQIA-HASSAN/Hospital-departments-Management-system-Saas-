@@ -1,6 +1,6 @@
 
 import { Siren, Check } from "lucide-react";
-import { useEmergencyAlerts } from "../../src/useEmergencyAlerts";
+import { useEmergencyAlerts } from "../../../useEmergencyAlerts";
 
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
@@ -46,6 +46,7 @@ export default function EmergencyPanel() {
           </li>
         ))}
       </ul>
+      <div className="text-6xl">the funcking emergency pannel is working aaaaahhhh</div>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { Stethoscope, Activity, Siren } from "lucide-react";
 import OPDContent from "./OPDcontent";
 import ICUContent from "./ICUcontent";   
-import EmergencyPanel from "../../../components/EmergencyPanel";       // add when ICU is built
+import EmergencyPanel from "./EmergencyPanel"
 // import EmergencyContent from "./EmergencyContent"; // add when Emergency is built
 
 const DEPARTMENT_LABELS = {
