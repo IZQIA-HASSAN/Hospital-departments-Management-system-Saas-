@@ -34,7 +34,7 @@ export default function DepartmentPage() {
   const Content = DEPARTMENT_CONTENT[slug];
 
   return (
-    <>
+    <div className="border">
       <span className="block font-mono text-xs tracking-[0.14em] text-emerald-700 mb-2">
         DEPARTMENT
       </span>
@@ -53,6 +53,6 @@ export default function DepartmentPage() {
           </p>
         </div>
       )}
-    </>
+    </div>
   );
 }

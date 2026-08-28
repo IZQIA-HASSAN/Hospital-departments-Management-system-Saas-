@@ -5,6 +5,7 @@ import Notification from "../models/Notification.js"
 import {notify }  from  "../utils/notificationService.js"
 import EmergencyAlert from "../models/EmergencyAlert.js"
 import { Op } from "sequelize"
+import sequelize from "../config/db.js";
 
 
 const router = express.Router()
@@ -91,13 +92,23 @@ router.post("/emergency", async (req, res) => {
 
     alert.notificationId = notification.id;
     await alert.save({ transaction: t });
+// emit this emergency alert 
 
+    try{
+      const {getIO} = await import("../utils/Socketmanager.js")
+      getIO().to(`hospital:${req.hospitalId}`).emit("emergency:created" , alert)
+
+    }catch(err){
+      console.error("Failed  tom emit emergency:created" , err.message)
+    }
     await t.commit();
+
     res.status(201).json({ alert, notification });
   } catch (err) {
     await t.rollback();
     console.error("Failed to create emergency alert:", err.message);
     res.status(500).json({ message: "Failed to send alert" });
+    console.log(err.message)
   }
 });
 

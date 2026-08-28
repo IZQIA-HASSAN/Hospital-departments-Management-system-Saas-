@@ -12,6 +12,7 @@ function authHeaders(extra = {}) {
 export function useEmergencyAlerts() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+   
 
   useEffect(() => {
     let cancelled = false;
@@ -56,5 +57,21 @@ export function useEmergencyAlerts() {
     }
   }, []);
 
-  return { alerts, loading, resolveAlert };
+
+  const createAlert = useCallback(async ({patientName , age , info})=>{
+    const res = await fetch(`${API_BASE}/emergency` , {
+      method : "POST",
+     headers: authHeaders({ "Content-Type": "application/json" }),
+      body : JSON.stringify({patientName , age , info}),
+    })
+    if(!res.ok){
+      const body = await res.json().catch(()=>({}))
+      throw new Error(body.message || "failed to send alert")
+    }
+    const {alert} = await res.json()
+    setAlerts((prev)=>(prev.some((a)=>a.id === alert.id) ? prev : [alert , ...prev]))
+    return alert;
+  }, [])
+
+  return { alerts, loading, resolveAlert  , createAlert};
 }

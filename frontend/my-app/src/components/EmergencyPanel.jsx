@@ -46,7 +46,7 @@ export default function EmergencyPanel() {
           </li>
         ))}
       </ul>
-      <div className="text-6xl">the funcking emergency pannel is working aaaaahhhh</div>
+      
     </div>
   );
 }
