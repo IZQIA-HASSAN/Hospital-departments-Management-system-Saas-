@@ -68,27 +68,24 @@ router.post("/emergency", async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const alert = await EmergencyAlert.create(
-      {
-        hospitalId: req.hospitalId,
-        patientName,
-        age: age || null,
-        info: info || null,
-        createdBy: req.user.id,
-      },
-      { transaction: t }
-    );
+  {
+    hospitalId: req.hospitalId,
+    patientName,
+    age: age || null,
+    info: info || null,
+    createdBy: req.accountType === "staff" ? req.user.id : null,
+  },
+  { transaction: t }
+);
 
-    // notify() does its own create + socket emit — call it inside the same
-    // transaction context isn't strictly needed since it's a separate table,
-    // but we do want alert.id available to link back
-    const notification = await notify({
-      hospitalId: req.hospitalId,
-      type: "emergency",
-      message,
-      severity: "critical",
-      meta: { alertId: alert.id, patientName, age: age || null, info: info || null },
-      createdBy: req.user.id,
-    });
+const notification = await notify({
+  hospitalId: req.hospitalId,
+  type: "emergency",
+  message,
+  severity: "critical",
+  meta: { alertId: alert.id, patientName, age: age || null, info: info || null },
+  createdBy: req.accountType === "staff" ? req.user.id : null,
+});
 
     alert.notificationId = notification.id;
     await alert.save({ transaction: t });
