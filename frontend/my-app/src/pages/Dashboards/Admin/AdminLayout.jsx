@@ -26,11 +26,7 @@ export default function AdminLayout() {
     catch { return null; }
   })();
 
-  // const handleLogout = () => {
-  //   localStorage.removeItem("token");
-  //   localStorage.removeItem("user");
-  //   navigate("/login");
-  // };
+  
 
 
   const handleLogout = async ()=>{
@@ -51,8 +47,8 @@ console.error("Logout notification failed:", err);
 
   return (
     <NotificationProvider>
-      <div className="min-h-screen bg-neutral-50 text-neutral-900 lg:grid lg:grid-cols-[240px_1fr]">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-200 lg:hidden">
+      <div className="min-h-screen bg-neutral-50 text-neutral-900 lg:grid lg:grid-cols-[240px_1fr] ">
+        <div className="flex items-center justify-between px-5 py-4 border-b  border-neutral-200 lg:hidden">
           <span className="font-serif font-bold text-lg">Round</span>
           <button onClick={() => setSidebarOpen((v) => !v)} className="text-neutral-700">
             {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
@@ -60,7 +56,7 @@ console.error("Logout notification failed:", err);
         </div>
 
         <aside className={`${sidebarOpen ? "flex" : "hidden"} lg:flex flex-col justify-between bg-emerald-950 text-neutral-50 px-5 py-8 lg:min-h-screen`}>
-          <div>
+          <div className="border">
             <span className="hidden lg:block font-serif font-bold text-xl mb-10 px-2">Round</span>
             <span className="block font-mono text-[0.65rem] tracking-[0.14em] text-emerald-400 px-2 mb-3">ADMIN</span>
 
@@ -141,7 +137,7 @@ console.error("Logout notification failed:", err);
           </header>
 
           <main className="flex-1 px-6 sm:px-10 py-10 lg:py-12">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-7xl mx-auto">
               <Outlet />
             </div>
           </main>

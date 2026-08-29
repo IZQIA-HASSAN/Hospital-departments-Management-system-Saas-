@@ -208,22 +208,22 @@ const onlineCount = staffList.filter((s) => s.isOnline).length;
         </form>
       )}
 
-      {hospitalQuery.data && (
-        <div className="border border-neutral-200 rounded-xl p-6 bg-white mb-8 flex items-start gap-3">
-          <Building2 className="text-emerald-700 mt-0.5" size={22} />
-          <div>
-            <p className="font-serif text-lg font-semibold">{hospitalQuery.data.name}</p>
-            <p className="text-sm opacity-60">
-              {hospitalQuery.data.address}, {hospitalQuery.data.city}
-            </p>
-            {hospitalQuery.data.phone && (
-              <p className="text-sm opacity-60">{hospitalQuery.data.phone}</p>
-            )}
+      <div className="grid sm:grid-cols-3 gap-4 mb-8">
+        {hospitalQuery.data && (
+          <div className="border border-neutral-200 rounded-xl p-6 bg-white flex items-start gap-3">
+            <Building2 className="text-emerald-700 mt-0.5 shrink-0" size={22} />
+            <div className="min-w-0">
+              <p className="font-serif text-lg font-semibold truncate">{hospitalQuery.data.name}</p>
+              <p className="text-sm opacity-60 truncate">
+                {hospitalQuery.data.address}, {hospitalQuery.data.city}
+              </p>
+              {hospitalQuery.data.phone && (
+                <p className="text-sm opacity-60 truncate">{hospitalQuery.data.phone}</p>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="grid sm:grid-cols-2 gap-4">
         <div className="border border-neutral-200 rounded-xl p-6 bg-white">
           <span className="font-mono text-xs tracking-wide text-neutral-500">
             STAFF ON ROSTER
@@ -231,6 +231,7 @@ const onlineCount = staffList.filter((s) => s.isOnline).length;
           <p className="font-serif text-3xl font-semibold mt-2">{onlineCount}</p>
           <p className="text-sm opacity-60 mt-1">No staff added yet.</p>
         </div>
+
         <div className="border border-neutral-200 rounded-xl p-6 bg-white">
           <span className="font-mono text-xs tracking-wide text-neutral-500">
             SHIFTS TODAY

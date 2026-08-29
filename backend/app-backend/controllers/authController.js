@@ -6,7 +6,8 @@ import Staff from "../models/Staff.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { resolveHospitalId } from "../middleware/resolveHospital.js";
 import { notify } from "../utils/notificationService.js";
-// uncomment/add this — no // in front
+import Hospital from "../models/Hospital.js";
+
 
 export const signup = async (req, res) => {
   try {
@@ -85,6 +86,10 @@ export const signupStaff = async (req, res) => {
 
     const sessionToken = generateToken(staff, "staff")
 
+    // FIX: this was missing — hospitalName below referenced `hospital`
+    // without ever declaring/fetching it, throwing ReferenceError.
+    const hospital = await Hospital.findByPk(staff.hospitalId);
+
 
 
     // ADDED: notify any admin dashboards live, same as addstaff used to
@@ -99,13 +104,7 @@ export const signupStaff = async (req, res) => {
         lastSeen: staff.lastSeen,
       });
     }
-    //  await notifyHospital(io, {
-    //   hospitalId: staff.hospitalId,
-    //   type: "staff_joined",
-    //   title: `${staff.name} joined the team`,
-    //   priority: "normal",
-    //   metadata: { staffId: staff.id },
-    // });
+   
 
     console.log(`new staff account created: ${staff.email}`);
 
@@ -117,6 +116,7 @@ export const signupStaff = async (req, res) => {
         name: staff.name,
         email: staff.email,
         role: staff.role,
+        hospitalName: hospital?.name || null,
       },
     });
   } catch (err) {
@@ -166,6 +166,9 @@ export const unifiedLogin = async (req, res) => {
         return res.status(403).json({ message: "Staff does not exist for this hospital" });
       }
 
+      // FIX: this was missing — same ReferenceError as signupStaff above.
+      const hospital = await Hospital.findByPk(hospitalId);
+
       // Fire-and-forget: don't await this, and don't let it block/fail the login.
       // Must run BEFORE the return below, and inside this if-block, or it never executes.
       notify({
@@ -179,7 +182,7 @@ export const unifiedLogin = async (req, res) => {
 
       return res.json({
         token,
-        user: { id: staff.id, name: staff.name, email: staff.email, role: staff.role },
+        user: { id: staff.id, name: staff.name, email: staff.email, role: staff.role , hospitalName : hospital?.name || null },
       });
     }
 
@@ -315,5 +318,3 @@ export const logout = async (req, res) => {
       res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   };
-
-

@@ -182,7 +182,7 @@ export default function StaffLayout() {
           </header>
 
           <main className="flex-1 px-6 sm:px-10 py-10 lg:py-12">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-7xl mx-auto">
               <Outlet />
             </div>
           </main>

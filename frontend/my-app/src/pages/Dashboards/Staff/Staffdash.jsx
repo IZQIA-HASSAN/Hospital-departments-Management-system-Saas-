@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import {  Clock, CalendarCheck } from "lucide-react";
+import { Building2 } from "lucide-react";
 
 export default function StaffDash() {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -14,6 +14,8 @@ export default function StaffDash() {
 
   // TODO: replace with real notifications data later
   const notifications = [];
+
+  const hospitalName = user?.hospitalName || null;
 
   // NOTE: socket connection management was removed from here entirely.
   // It now lives solely in StaffLayout.jsx via useSocketConnection() —
@@ -40,28 +42,21 @@ export default function StaffDash() {
     
       </div>
 
-      {/* Dummy cards */}
+      {/* Dummy card */}
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="border border-neutral-200 rounded-xl p-6 bg-white">
           <div className="flex items-center gap-2 mb-2">
-            <Clock size={16} className="text-emerald-700" />
+            <Building2 size={16} className="text-emerald-700" />
             <span className="font-mono text-xs tracking-wide text-neutral-500">
-              NEXT SHIFT
+              HOSPITAL
             </span>
           </div>
-          <p className="font-serif text-3xl font-semibold mt-2">Tomorrow</p>
-          <p className="text-sm opacity-60 mt-1">9:00 AM – 5:00 PM</p>
-        </div>
-
-        <div className="border border-neutral-200 rounded-xl p-6 bg-white">
-          <div className="flex items-center gap-2 mb-2">
-            <CalendarCheck size={16} className="text-emerald-700" />
-            <span className="font-mono text-xs tracking-wide text-neutral-500">
-              SHIFTS THIS WEEK
-            </span>
-          </div>
-          <p className="font-serif text-3xl font-semibold mt-2">4</p>
-          <p className="text-sm opacity-60 mt-1">2 completed · 2 upcoming</p>
+          <p className="font-serif text-3xl font-semibold mt-2">
+            {hospitalName || "—"}
+          </p>
+          <p className="text-sm opacity-60 mt-1">
+            {hospitalName ? "You're invited to this hospital." : "No hospital on file."}
+          </p>
         </div>
       </div>
     </div>
