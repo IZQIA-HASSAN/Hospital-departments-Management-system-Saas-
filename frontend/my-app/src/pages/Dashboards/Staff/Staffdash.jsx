@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Building2 } from "lucide-react";
+import ICUpatientchart from "../../../components/ICUpatientchart";
+import OPDpatientschart from "../../../components/OPDpatientschart";
 
 export default function StaffDash() {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -28,6 +30,7 @@ export default function StaffDash() {
   // with only socket.on(...)/socket.off(...) — no connect()/disconnect().
 
   return (
+    <>
     <div>
       <div className="flex items-start justify-between mb-8">
         <div>
@@ -60,5 +63,18 @@ export default function StaffDash() {
         </div>
       </div>
     </div>
+    <div className=" flex ">
+          <div className="lg:w-[360px] shrink-0 ">
+        <ICUpatientchart />
+        
+      </div>
+    
+      <div className="lg:w-[360px] shrink-0 ">
+        <OPDpatientschart/>
+      </div>
+    
+    
+    </div>
+    </>
   );
 }

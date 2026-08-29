@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Building2 } from "lucide-react";
 import { fetchStaff } from "./Staff";
+import ICUpatientchart from "../../../components/ICUpatientchart";
+import OPDpatientschart from "../../../components/OPDpatientschart";
 
 export default function Admindash() {
   const queryClient = useQueryClient();
@@ -207,39 +209,48 @@ const onlineCount = staffList.filter((s) => s.isOnline).length;
           </div>
         </form>
       )}
+      <div className="flex flex-col lg:flex-row gap-4 mb-8 items-stretch">
 
-      <div className="grid sm:grid-cols-3 gap-4 mb-8">
-        {hospitalQuery.data && (
-          <div className="border border-neutral-200 rounded-xl p-6 bg-white flex items-start gap-3">
-            <Building2 className="text-emerald-700 mt-0.5 shrink-0" size={22} />
-            <div className="min-w-0">
-              <p className="font-serif text-lg font-semibold truncate">{hospitalQuery.data.name}</p>
-              <p className="text-sm opacity-60 truncate">
-                {hospitalQuery.data.address}, {hospitalQuery.data.city}
-              </p>
-              {hospitalQuery.data.phone && (
-                <p className="text-sm opacity-60 truncate">{hospitalQuery.data.phone}</p>
-              )}
-            </div>
-          </div>
-        )}
-
-        <div className="border border-neutral-200 rounded-xl p-6 bg-white">
-          <span className="font-mono text-xs tracking-wide text-neutral-500">
-            STAFF ON ROSTER
-          </span>
-          <p className="font-serif text-3xl font-semibold mt-2">{onlineCount}</p>
-          <p className="text-sm opacity-60 mt-1">No staff added yet.</p>
-        </div>
-
-        <div className="border border-neutral-200 rounded-xl p-6 bg-white">
-          <span className="font-mono text-xs tracking-wide text-neutral-500">
-            SHIFTS TODAY
-          </span>
-          <p className="font-serif text-3xl font-semibold mt-2">—</p>
-          <p className="text-sm opacity-60 mt-1">Nothing scheduled yet.</p>
+  <div className="grid sm:grid-cols-2 gap-4 flex-1">
+    {hospitalQuery.data && (
+      <div className="border border-neutral-200 rounded-xl p-6 bg-white flex items-start gap-3">
+        <Building2 className="text-emerald-700 mt-0.5 shrink-0" size={22} />
+        <div className="min-w-0">
+          <p className="font-serif text-lg font-semibold truncate">{hospitalQuery.data.name}</p>
+          <p className="text-sm opacity-60 truncate">
+            {hospitalQuery.data.address}, {hospitalQuery.data.city}
+          </p>
+          {hospitalQuery.data.phone && (
+            <p className="text-sm opacity-60 truncate">{hospitalQuery.data.phone}</p>
+          )}
         </div>
       </div>
+    )}
+
+    <div className="border border-neutral-200 rounded-xl p-6 bg-white">
+      <span className="font-mono text-xs tracking-wide text-neutral-500">
+        STAFF ON ROSTER
+      </span>
+      <p className="font-serif text-3xl font-semibold mt-2">{onlineCount}</p>
+      <p className="text-sm opacity-60 mt-1">No staff added yet.</p>
+    </div>
+  </div>
+
+  
+
+</div>
+
+
+<div className="flex flex-col lg:flex-row gap-4">
+  <div className="w-full lg:w-[360px] shrink-0">
+    <ICUpatientchart />
+  </div>
+
+  <div className="w-full lg:w-[360px] shrink-0">
+    <OPDpatientschart />
+  </div>
+</div>
+  
     </>
   );
 }
