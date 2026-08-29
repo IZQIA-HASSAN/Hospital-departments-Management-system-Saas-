@@ -14,6 +14,12 @@ import { useEmergencyAlerts } from "../useEmergencyAlerts";
 
 // Buckets active alerts by the hour they came in, e.g. "14:00", "15:00"
 function bucketByHour(alerts) {
+  // FIX: alerts can be undefined (before the fetch settles) or a
+  // non-array error body (e.g. {message: "..."} from a 403 when there's
+  // no hospital yet) — iterating that directly threw "alerts is not
+  // iterable". Bail out to an empty chart instead of crashing.
+  if (!Array.isArray(alerts)) return [];
+
   const buckets = {};
 
   for (const alert of alerts) {

@@ -146,9 +146,7 @@ export const unifiedLogin = async (req, res) => {
       const token = generateToken(user, "admin");
 
       const hospitalId = await resolveHospitalId(user, "admin");
-      if (!hospitalId) {
-        return res.status(403).json({ message: "this user does not exist for the hospital" });
-      }
+      
 
       console.log("user has logged in");
       return res.json({

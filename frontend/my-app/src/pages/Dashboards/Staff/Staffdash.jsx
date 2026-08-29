@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, BedDouble, Stethoscope, Siren } from "lucide-react";
-import ICUpatientchart, { occupiedbeds } from "../../../components/ICUpatientchart";
+import ICUpatientchart, { fetchOccupiedBeds } from "../../../components/ICUpatientchart";
 import OPDpatientschart, { fetchTodaysVisits } from "../../../components/OPDpatientschart";
 import EmergencyChart from "../../../components/Emergencychart";
 import { useEmergencyAlerts } from "../../../useEmergencyAlerts";
@@ -29,7 +29,7 @@ export default function StaffDash() {
   // endpoint, no props into the charts — just shared cache.
   const { data: icuBeds = [], isLoading: icuLoading } = useQuery({
     queryKey: ["icu", "beds", "occupied"],
-    queryFn: occupiedbeds,
+    queryFn: fetchOccupiedBeds,
     refetchInterval: 15000,
   });
   const icuCount = icuLoading ? null : icuBeds.length;

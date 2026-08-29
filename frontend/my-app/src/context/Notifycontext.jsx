@@ -28,10 +28,19 @@ export function NotificationProvider({ children }) {
         (async () => {
             try {
                 const res = await fetch(`${API_BASE}?limit=30`, { headers: authHeaders() });
+                if (!res.ok) {
+                    // Expected before a hospital exists (403) or right after
+                    // login. Treat as "no notifications yet" instead of
+                    // storing the error body — {message: "..."} isn't an
+                    // array and crashes the .filter() below.
+                    if (!cancelled) setNotifications([]);
+                    return;
+                }
                 const data = await res.json();
-                if (!cancelled) setNotifications(data);
+                if (!cancelled) setNotifications(Array.isArray(data) ? data : []);
             } catch (err) {
                 console.error("Failed to load notifications:", err);
+                if (!cancelled) setNotifications([]);
             } finally {
                 if (!cancelled) setLoading(false);
             }
@@ -81,4 +90,3 @@ export function useNotifications() {
     if (!ctx) throw new Error("useNotifications must be used inside a <NotificationProvider>");
     return ctx;
 }
-

@@ -26,7 +26,7 @@ function authHeaders(extra = {}) {
   };
 }
 
- export async function fetchTodaysVisits() {
+export async function fetchTodaysVisits() {
   const today = new Date().toISOString().split("T")[0]; // matches visitDate's DATEONLY format
   const res = await fetch(`${API_BASE}?date=${today}`, {
     headers: authHeaders(),
@@ -67,7 +67,7 @@ export default function OPDpatientschart() {
   }));
 
   const totalToday = visits.length;
-  const noData = !isLoading && !isError && totalToday === 0;
+  const noData = !isLoading && (isError || totalToday === 0);
 
   return (
     <div className="border border-neutral-200 rounded-xl p-6 bg-white">
@@ -83,8 +83,6 @@ export default function OPDpatientschart() {
       <div className="mt-4">
         {isLoading ? (
           <p className="text-sm text-neutral-400">Loading chart…</p>
-        ) : isError ? (
-          <p className="text-sm text-red-600">Couldn't load OPD data.</p>
         ) : noData ? (
           <p className="text-sm text-neutral-400">No OPD visits registered today.</p>
         ) : (

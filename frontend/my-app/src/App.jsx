@@ -19,13 +19,15 @@ import Staffdash from "./pages/Dashboards/Staff/Staffdash";
 
 import DepartmentPage from "./pages/Dashboards/departments/DepartmentPage";
 import RequireRole from "./components/RequireRole";
-
+// RequireHospital is a COMPONENT (renders loading/empty/children), not the
+// useHospital hook itself — a hook can't be used as a JSX wrapper like
+// <useHospital>...</useHospital>. Import the component here instead.
+import RequireHospital from "./components/RequireHospital"; // adjust path to wherever you saved it
 
 import ResetPassword from "./pages/auth/ResetPassword"; // adjust path
 import OPDcontent from "./pages/Dashboards/departments/OPDcontent";
 import EmergencyPanel from "./components/EmergencyPanel";
 import EmergencyContent from "./pages/Dashboards/departments/EmergencyContent";
-
 
 import "./App.css";
 
@@ -40,17 +42,21 @@ function App() {
       <Route path="/staff-signup" element={<StaffSignup />} />
       <Route path="/forgotpassword" element={<Forgotpassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/OPD-content" element={<OPDcontent/>}/>
-      <Route path="/Emergency-panel" element={<EmergencyPanel/>}/>
-      <Route path="/EmergencyContent" element={<EmergencyContent/>}/>
+      <Route path="/OPD-content" element={<OPDcontent />} />
+      <Route path="/Emergency-panel" element={<EmergencyPanel />} />
+      <Route path="/EmergencyContent" element={<EmergencyContent />} />
       {/* <Route path="/staff-login" element={<StaffLogin />} /> */}
 
-      {/* Admin dashboard — guarded */}
+      {/* Admin dashboard — role-guarded, then hospital-guarded.
+          Admins can legitimately have no hospital yet (before they create
+          one), so this is the one place the guard belongs. */}
       <Route
         path="/admin"
         element={
           <RequireRole role="admin">
-            <AdminLayout />
+            <RequireHospital>
+              <AdminLayout />
+            </RequireHospital>
           </RequireRole>
         }
       >
@@ -60,7 +66,10 @@ function App() {
         <Route path="settings" element={<Settings />} />
       </Route>
 
-      {/* Staff dashboard — guarded */}
+      {/* Staff dashboard — role-guarded only.
+          No RequireHospital here: a staff account only exists because
+          someone accepted an invite into an already-created hospital, so
+          "no hospital yet" can never legitimately apply to staff. */}
       <Route
         path="/staff"
         element={

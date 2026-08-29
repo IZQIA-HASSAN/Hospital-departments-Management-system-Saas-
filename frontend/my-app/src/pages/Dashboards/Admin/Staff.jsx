@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Mail } from "lucide-react";
-import socket , {connectSocket} from "../../../socket.js";
+import socket, { connectSocket } from "../../../socket.js";
+import { useHospital } from "../../../useHospital.js";
 
 export async function fetchStaff() {
   const res = await fetch("http://localhost:5000/api/staff", {
@@ -44,6 +45,16 @@ async function removeStaff(id) {
 
 export default function Staff() {
   const queryClient = useQueryClient();
+
+  // Shared cache entry — if Admindash.jsx (or anything else) already
+  // fetched ["myhospital"], this resolves instantly with no new request.
+  const {
+    data: hospital,
+    isLoading: hospitalLoading,
+    error: hospitalError,
+  } = useHospital();
+  const hasHospital = !!hospital;
+
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteSent, setInviteSent] = useState(false);
 
@@ -54,6 +65,7 @@ export default function Staff() {
   } = useQuery({
     queryKey: ["staff"],
     queryFn: fetchStaff,
+    enabled: hasHospital, // don't hit /api/staff until a hospital exists
   });
 
   const inviteMutation = useMutation({
@@ -75,8 +87,10 @@ export default function Staff() {
   });
 
   useEffect(() => {
-    // socket.connect();
-    connectSocket()
+    // No hospital yet — don't open a socket or subscribe to staff events.
+    if (!hasHospital) return;
+
+    connectSocket();
 
     const onStatusChanged = ({ id, isOnline }) => {
       queryClient.setQueryData(["staff"], (old = []) =>
@@ -106,7 +120,7 @@ export default function Staff() {
       socket.off("staff:deleted", onDeleted);
       socket.disconnect();
     };
-  }, [queryClient]);
+  }, [queryClient, hasHospital]);
 
   const handleInvite = (e) => {
     e.preventDefault();
@@ -117,6 +131,31 @@ export default function Staff() {
     if (!window.confirm("Remove this staff member?")) return;
     deleteMutation.mutate(id);
   };
+
+  // Still figuring out whether a hospital exists — don't render anything
+  // that assumes one yet.
+  if (hospitalLoading) {
+    return <p className="text-sm opacity-60">Loading…</p>;
+  }
+
+  if (hospitalError) {
+    return (
+      <p className="text-sm text-red-600">
+        {hospitalError.message || "Failed to load hospital"}
+      </p>
+    );
+  }
+
+  if (!hasHospital) {
+    return (
+      <div className="border border-dashed border-neutral-300 rounded-xl p-10 text-center bg-white">
+        <p className="font-serif text-xl mb-1">No hospital yet</p>
+        <p className="text-sm opacity-60">
+          Create your hospital before inviting staff.
+        </p>
+      </div>
+    );
+  }
 
   const onlineCount = staffList.filter((s) => s.isOnline).length;
 
