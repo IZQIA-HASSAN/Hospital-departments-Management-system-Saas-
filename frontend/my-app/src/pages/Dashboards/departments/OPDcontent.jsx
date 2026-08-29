@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { User2, Clock } from "lucide-react";
+import { User2, Clock, Search, X } from "lucide-react";
 
 const API_BASE = "http://localhost:5000/api/opd";
 
@@ -21,10 +21,6 @@ const EMPTY_FORM = {
   reason: "",
 };
 
-// --- API functions -------------------------------------------------------
-
-// OPD routes previously had no auth. They now require it, same as ICU —
-// every call below needs a Bearer token or it 401s.
 function authHeaders(extra = {}) {
   const token = localStorage.getItem("token");
   return {
@@ -33,7 +29,6 @@ function authHeaders(extra = {}) {
   };
 }
 
-// GET requests can't carry a body — filters go in the query string instead
 async function getallvisits({ date, status, department } = {}) {
   const params = new URLSearchParams();
   if (date) params.set("date", date);
@@ -93,12 +88,25 @@ async function getvisitbyID({ id }) {
   return data.visit;
 }
 
-// --- Component -------------------------------------------------------------
-
 const OPDcontent = () => {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
+
+  // ---- STEP 1: raw search state — updates on every keystroke ----
+  const [search, setSearch] = useState("");
+
+  // ---- STEP 2: debounced search state — lags behind by 300ms ----
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    // cleanup: if `search` changes again before 300ms is up, cancel
+    // the pending timer so we don't set a stale value
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const visitsKey = ["opd", "visits"];
 
@@ -162,6 +170,15 @@ const OPDcontent = () => {
     (v) =>
       v.visitDate === todayStr &&
       (v.status === "waiting" || v.status === "in-progress")
+  );
+
+  // ---- STEP 3: filtered derived data — memoized, uses debounced value ----
+  const filteredQueue = useMemo(
+    () =>
+      queue.filter((visit) =>
+        (visit.patientName ?? "").toLowerCase().includes(debouncedSearch.toLowerCase())
+      ),
+    [queue, debouncedSearch]
   );
 
   const error =
@@ -232,11 +249,35 @@ const OPDcontent = () => {
       )}
 
       <div className="rounded-xl border border-neutral-200 bg-white text-left shadow-sm">
-        <div className="flex items-center justify-between border-b border-neutral-100 px-6 py-4">
-          <h2 className="text-sm font-semibold text-neutral-700">Today's queue</h2>
-          <span className="text-xs text-neutral-400">
-            {queue.length} {queue.length === 1 ? "patient" : "patients"} waiting
-          </span>
+        <div className="border-b border-neutral-100 px-6 py-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-neutral-700">Today's queue</h2>
+            <span className="text-xs text-neutral-400">
+              {queue.length} {queue.length === 1 ? "patient" : "patients"} waiting
+            </span>
+          </div>
+
+          {/* ---- STEP 4: the UI — input bound to RAW state ---- */}
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <input
+              type="text"
+              placeholder="Search patient name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-lg border border-neutral-200 bg-neutral-50 py-2 pl-9 pr-9 text-sm text-neutral-700 outline-none transition placeholder:text-neutral-400 focus:border-emerald-700 focus:bg-white focus:ring-2 focus:ring-emerald-700/15"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                aria-label="Clear search"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-600"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {isLoading ? (
@@ -246,9 +287,13 @@ const OPDcontent = () => {
             <p className="font-serif text-lg text-neutral-700">No patients in queue</p>
             <p className="mt-1 text-sm text-neutral-400">Registered visits will appear here as tokens are assigned.</p>
           </div>
+        ) : filteredQueue.length === 0 ? (
+          <div className="px-6 py-16 text-center">
+            <p className="text-sm text-neutral-500">No patients match "{search}"</p>
+          </div>
         ) : (
           <ul className="divide-y divide-neutral-100">
-            {queue.map((visit) => (
+            {filteredQueue.map((visit) => (
               <li key={visit.id} className="flex items-center justify-between px-6 py-4">
                 <div className="flex items-center gap-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-700 text-sm font-bold text-white">

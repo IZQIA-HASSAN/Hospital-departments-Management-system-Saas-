@@ -56,7 +56,7 @@ console.error("Logout notification failed:", err);
         </div>
 
         <aside className={`${sidebarOpen ? "flex" : "hidden"} lg:flex flex-col justify-between bg-emerald-950 text-neutral-50 px-5 py-8 lg:min-h-screen`}>
-          <div className="border">
+          <div className="">
             <span className="hidden lg:block font-serif font-bold text-xl mb-10 px-2">Round</span>
             <span className="block font-mono text-[0.65rem] tracking-[0.14em] text-emerald-400 px-2 mb-3">ADMIN</span>
 

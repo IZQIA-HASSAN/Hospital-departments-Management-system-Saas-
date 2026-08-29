@@ -1,6 +1,6 @@
-import { useState  , useMemo, useEffect} from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BedDouble, HeartPulse, UserRound } from "lucide-react";
+import { BedDouble, HeartPulse, UserRound, Search, X } from "lucide-react";
 
 // Router is mounted with app.use("/api/icu", icuRouter) and icuRouter's own
 // routes now start at "/" (see routes/icu.js), so the base is just
@@ -112,8 +112,8 @@ const ICUcontent = () => {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
-  const [search , setSearch] = useState("")
-  const [debouncedsearch , setDebouncedsearch] = useState("")
+  const [search, setSearch] = useState("");
+  const [debouncedsearch, setDebouncedsearch] = useState("");
 
   // No hospitalId here — the backend resolves it from the logged-in
   // user's token (see middleware/resolveHospital.js), so every user only
@@ -193,21 +193,21 @@ const ICUcontent = () => {
   const occupied = beds.filter((b) => b.status === "occupied");
   const critical = occupied.filter((b) => b.severity === "critical").length;
 
-// debouncing here
-useEffect(()=>{
-  const timer = setTimeout(()=> {
-    setDebouncedsearch(search)
-  }, 300)
-  return ()=>clearTimeout(timer)
-}, [search])
-  
-const filtered = useMemo(
-  () =>
-    beds.filter((bed) =>
-      (bed.patientName ?? "").toLowerCase().includes(debouncedsearch.toLowerCase())
-    ),
-  [beds, debouncedsearch]
-);
+  // debouncing here
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedsearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const filtered = useMemo(
+    () =>
+      beds.filter((bed) =>
+        (bed.patientName ?? "").toLowerCase().includes(debouncedsearch.toLowerCase())
+      ),
+    [beds, debouncedsearch]
+  );
 
   const error =
     (isError && "Couldn't load ICU beds. Try refreshing.") ||
@@ -219,7 +219,6 @@ const filtered = useMemo(
 
   return (
     <div>
-    <input className="border" type="text" placeholder="search patient name" value={search} onChange={(e)=> setSearch(e.target.value)} />
       <div className="mb-4 flex items-center justify-end">
         <button
           onClick={() => setShowForm((s) => !s)}
@@ -282,20 +281,47 @@ const filtered = useMemo(
         </form>
       )}
 
-      <div className="rounded-xl border border-neutral-200 bg-white text-left shadow-sm  h-[390px] overflow-y-scroll">
-        <div className="flex items-center justify-between border-b border-yellow-100 px-6 py-4">
-          <h2 className="text-sm font-semibold text-neutral-700">ICU beds</h2>
-          <span className="text-xs text-neutral-400">
-            {occupied.length} occupied{critical > 0 ? ` · ${critical} critical` : ""}
-          </span>
+      <div className="rounded-xl border border-neutral-200 bg-white text-left shadow-sm h-[390px] overflow-y-scroll">
+        <div className="border-b border-neutral-200 px-6 py-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-neutral-700">ICU beds</h2>
+            <span className="text-xs text-neutral-400">
+              {occupied.length} occupied{critical > 0 ? ` · ${critical} critical` : ""}
+            </span>
+          </div>
+
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+            <input
+              type="text"
+              placeholder="Search patient name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-lg border border-neutral-200 bg-neutral-50 py-2 pl-9 pr-9 text-sm text-neutral-700 outline-none transition placeholder:text-neutral-400 focus:border-rose-700 focus:bg-white focus:ring-2 focus:ring-rose-700/15"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                aria-label="Clear search"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-600"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {isLoading ? (
-          <div className="px-6 py-16 text-center text-sm text-neutral-400 ">Loading beds...</div>
+          <div className="px-6 py-16 text-center text-sm text-neutral-400">Loading beds...</div>
         ) : beds.length === 0 ? (
           <div className="px-6 py-16 text-center">
             <p className="font-serif text-lg text-neutral-700">No ICU beds yet</p>
             <p className="mt-1 text-sm text-neutral-400">Admitted patients will appear here.</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="px-6 py-16 text-center">
+            <p className="text-sm text-neutral-500">No patients match "{search}"</p>
           </div>
         ) : (
           <ul className="divide-y divide-neutral-100">
