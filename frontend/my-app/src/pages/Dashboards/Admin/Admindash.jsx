@@ -4,6 +4,7 @@ import { Building2 } from "lucide-react";
 import { fetchStaff } from "./Staff";
 import ICUpatientchart from "../../../components/ICUpatientchart";
 import OPDpatientschart from "../../../components/OPDpatientschart";
+import EmergencyChart from "../../../components/Emergencychart";
 
 export default function Admindash() {
   const queryClient = useQueryClient();
@@ -248,6 +249,10 @@ const onlineCount = staffList.filter((s) => s.isOnline).length;
 
   <div className="w-full lg:w-[360px] shrink-0">
     <OPDpatientschart />
+  </div>
+
+  <div className="w-full lg:w-[360px] shrink-0 mt-5">
+    <EmergencyChart />
   </div>
 </div>
   

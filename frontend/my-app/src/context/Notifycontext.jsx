@@ -4,6 +4,8 @@ import { useSocketConnection } from "../useSocketConnection.js"; // handles conn
 
 const NotificationContext = createContext(null);
 
+
+
 const API_BASE = "http://localhost:5000/api/notifications";
 
 function authHeaders(extra = {}) {
@@ -79,3 +81,4 @@ export function useNotifications() {
     if (!ctx) throw new Error("useNotifications must be used inside a <NotificationProvider>");
     return ctx;
 }
+

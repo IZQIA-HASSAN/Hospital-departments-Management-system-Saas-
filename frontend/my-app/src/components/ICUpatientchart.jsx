@@ -22,7 +22,7 @@ function authHeaders(extra = {}){
     }
 }
 
-async function occupiedbeds(){
+export async function occupiedbeds(){
     const res = await fetch(`${API_BASE}?status=occupied`,{
         headers : authHeaders(),
     })

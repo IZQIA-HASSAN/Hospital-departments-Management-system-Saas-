@@ -282,7 +282,7 @@ const filtered = useMemo(
         </form>
       )}
 
-      <div className="rounded-xl border border-neutral-200 bg-white text-left shadow-sm  h-80 overflow-y-scroll">
+      <div className="rounded-xl border border-neutral-200 bg-white text-left shadow-sm  h-[390px] overflow-y-scroll">
         <div className="flex items-center justify-between border-b border-yellow-100 px-6 py-4">
           <h2 className="text-sm font-semibold text-neutral-700">ICU beds</h2>
           <span className="text-xs text-neutral-400">
@@ -291,7 +291,7 @@ const filtered = useMemo(
         </div>
 
         {isLoading ? (
-          <div className="px-6 py-16 text-center text-sm text-neutral-400">Loading beds...</div>
+          <div className="px-6 py-16 text-center text-sm text-neutral-400 ">Loading beds...</div>
         ) : beds.length === 0 ? (
           <div className="px-6 py-16 text-center">
             <p className="font-serif text-lg text-neutral-700">No ICU beds yet</p>

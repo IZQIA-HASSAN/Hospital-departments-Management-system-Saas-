@@ -51,7 +51,7 @@ export default function EmergencyContent() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl p-6">
+    <div className="mx-auto max-w-5xl p-6">
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Siren className="h-5 w-5 text-red-600" />
@@ -67,48 +67,50 @@ export default function EmergencyContent() {
         </button>
       </div>
 
-      {/* Active list — always visible, never affected by the form */}
-      <div className="rounded-xl border border-neutral-200 overflow-scroll h-80">
-        <div className="border-b border-neutral-200 px-4 py-3">
-          <h2 className="text-sm font-semibold text-neutral-700">
-            Active emergencies {!loading && `(${alerts.length})`}
+      {/* Active list — restyled to match the ICU/OPD chart card look */}
+      <div className=" border-neutral-200 rounded-xl bg-white overflow-hidden border h-80">
+        <div className="border-b border-neutral-200 px-6 py-4">
+          <h2 className="font-mono text-xs tracking-wide text-neutral-500">
+            ACTIVE EMERGENCIES {!loading && `(${alerts.length})`}
           </h2>
         </div>
 
-        {loading ? (
-          <p className="px-4 py-6 text-sm text-neutral-400">Loading...</p>
-        ) : alerts.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-neutral-400">No active emergencies.</p>
-        ) : (
-          <ul className="divide-y divide-neutral-100">
-            {alerts.map((alert) => (
-              <li key={alert.id} className="flex items-center justify-between px-4 py-3">
-                <div>
-                  <p className="text-sm font-medium text-neutral-800">
-                    {alert.patientName}
-                    {alert.age ? (
-                      <span className="font-normal text-neutral-400"> · {alert.age}</span>
-                    ) : null}
-                  </p>
-                  {alert.info && (
-                    <p className="mt-0.5 text-xs text-neutral-500">{alert.info}</p>
-                  )}
-                  <p className="mt-0.5 text-xs text-neutral-400">{timeAgo(alert.createdAt)}</p>
-                </div>
+        <div className="overflow-y-auto h-[420px]">
+          {loading ? (
+            <p className="px-6 py-6 text-sm text-neutral-400">Loading...</p>
+          ) : alerts.length === 0 ? (
+            <p className="px-6 py-6 text-sm text-neutral-400">No active emergencies.</p>
+          ) : (
+            <ul className="divide-y divide-neutral-100">
+              {alerts.map((alert) => (
+                <li key={alert.id} className="flex items-center justify-between px-6 py-4">
+                  <div>
+                    <p className="text-sm font-medium text-neutral-800">
+                      {alert.patientName}
+                      {alert.age ? (
+                        <span className="font-normal text-neutral-400"> · {alert.age}</span>
+                      ) : null}
+                    </p>
+                    {alert.info && (
+                      <p className="mt-0.5 text-xs text-neutral-500">{alert.info}</p>
+                    )}
+                    <p className="mt-0.5 text-xs text-neutral-400">{timeAgo(alert.createdAt)}</p>
+                  </div>
 
-                <button
-                  onClick={() => resolveAlert(alert.id)}
-                  className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
-                >
-                  <Check className="h-3.5 w-3.5" />
-                  Resolve
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+                  <button
+                    onClick={() => resolveAlert(alert.id)}
+                    className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                    Resolve
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
 
-        {error && <p className="px-4 py-3 text-xs text-red-600">{error}</p>}
+          {error && <p className="px-6 py-3 text-xs text-red-600">{error}</p>}
+        </div>
       </div>
 
       {/* Modal popup with the registration form */}
@@ -119,14 +121,12 @@ export default function EmergencyContent() {
           aria-modal="true"
           aria-label="Register a new emergency"
         >
-          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/30"
             onClick={closeForm}
             aria-hidden="true"
           />
 
-          {/* Panel */}
           <div className="relative z-10 w-full max-w-md overflow-y-auto rounded-xl border border-red-200 bg-red-50 p-4 shadow-xl max-h-[90vh]">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-red-700">Register a new emergency</h2>

@@ -26,7 +26,7 @@ function authHeaders(extra = {}) {
   };
 }
 
-async function fetchTodaysVisits() {
+ export async function fetchTodaysVisits() {
   const today = new Date().toISOString().split("T")[0]; // matches visitDate's DATEONLY format
   const res = await fetch(`${API_BASE}?date=${today}`, {
     headers: authHeaders(),
