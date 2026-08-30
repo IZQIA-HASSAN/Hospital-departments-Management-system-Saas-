@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { User2, Clock, Search, X } from "lucide-react";
-import { useHospital } from "../../../useHospital";
 
 const API_BASE = "http://localhost:5000/api/opd";
 
@@ -94,10 +93,18 @@ const OPDcontent = () => {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
 
-  // ADDED: check whether the logged-in admin/staff's hospital actually
-  // exists before doing anything OPD-related.
-  const { data: hospital, isLoading: hospitalLoading } = useHospital();
-  const hasHospital = !!hospital;
+  // REMOVED: a hospital-existence gate (useHospital(), calling
+  // GET /api/hospitals/me) used to sit here. That endpoint is
+  // intentionally admin-only on the backend (authorize("admin")) — it
+  // means "the hospital I administer," not "the hospital I belong to."
+  // For a staff account it 403s every time, which made `hasHospital`
+  // always false and permanently blocked staff from ever seeing OPD
+  // visits, showing a "create your hospital" message they can't act on
+  // and don't need to.
+  //
+  // GET /api/opd is already scoped correctly for BOTH admin and staff by
+  // the backend's attachHospitalId middleware — no frontend pre-check
+  // needed. Same fix as ICUcontent.jsx.
 
   // ---- STEP 1: raw search state — updates on every keystroke ----
   const [search, setSearch] = useState("");
@@ -124,9 +131,6 @@ const OPDcontent = () => {
     queryKey: visitsKey,
     queryFn: () => getallvisits(),
     refetchInterval: 15000,
-    // FIX: don't fetch OPD visits at all until a hospital exists —
-    // avoids the guaranteed 403 and the console noise that came with it.
-    enabled: hasHospital,
   });
 
   const registerMutation = useMutation({
@@ -196,25 +200,6 @@ const OPDcontent = () => {
     (statusMutation.isError && "Couldn't update status.") ||
     (deleteMutation.isError && "Couldn't delete visit.") ||
     null;
-
-  // ADDED: while we're still checking hospital status, show nothing
-  // alarming — just a lightweight loading line.
-  if (hospitalLoading) {
-    return <p className="text-sm text-neutral-400">Loading…</p>;
-  }
-
-  // ADDED: no hospital yet — don't render the form/queue/search at all,
-  // since none of it can do anything useful without one.
-  if (!hasHospital) {
-    return (
-      <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-10 text-center">
-        <p className="font-serif text-lg text-neutral-700">No hospital set up yet</p>
-        <p className="mt-1 text-sm text-neutral-400">
-          Create your hospital from the Dashboard before registering OPD visits.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div>

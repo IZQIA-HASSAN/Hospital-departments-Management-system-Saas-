@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Siren, Check, AlertTriangle, X, Plus } from "lucide-react";
 import { useEmergencyAlerts } from "../../../useEmergencyAlerts";
-import { useHospital } from "../../../useHospital.js";
 
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
@@ -11,55 +10,25 @@ function timeAgo(dateStr) {
   return `${Math.floor(diff / 3600)}h ago`;
 }
 
-// Wrapper: decides whether it's safe to mount the real page.
-// useEmergencyAlerts presumably fetches on mount, and I don't have its
-// source to add an `enabled` flag inside it — so instead we just never
-// mount <EmergencyAlerts /> (and therefore never call the hook) until a
-// hospital is confirmed to exist. This guarantees zero requests from
-// this feature when there's no hospital yet.
-export default function EmergencyPage() {
-  const { data: hospital, isLoading: hospitalLoading, error: hospitalError } =
-    useHospital();
-  const hasHospital = !!hospital;
-
-  if (hospitalLoading) {
-    return <p className="mx-auto max-w-5xl p-6 text-sm text-neutral-400">Loading…</p>;
-  }
-
-  if (hospitalError) {
-    return (
-      <p className="mx-auto max-w-5xl p-6 text-sm text-red-600">
-        {hospitalError.message || "Failed to load hospital"}
-      </p>
-    );
-  }
-
-  if (!hasHospital) {
-    return (
-      <div className="mx-auto max-w-5xl p-6">
-        <div className="border border-dashed border-neutral-300 rounded-xl p-10 text-center bg-white">
-          <p className="font-serif text-xl mb-1">No hospital yet</p>
-          <p className="text-sm opacity-60">
-            Create your hospital before managing emergency alerts.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return <EmergencyAlerts />;
-}
-
-// Unchanged from before, except it now only ever mounts once a hospital
-// is confirmed to exist, so useEmergencyAlerts only fires its fetch then.
-function EmergencyAlerts() {
+// REMOVED: this used to be a wrapper that gated <EmergencyAlerts /> behind
+// useHospital() (GET /api/hospitals/me) before mounting it. That endpoint
+// is intentionally admin-only on the backend — for staff it 403s every
+// time, which meant staff could never open this page at all, always
+// seeing "create your hospital first."
+//
+// It's also unnecessary: the notifications/emergency routes
+// (routes/notifications.js) are already scoped correctly for BOTH admin
+// and staff via attachHospitalId, same as ICU and OPD — no frontend
+// hospital pre-check needed. Same class of bug, same fix, as
+// ICUcontent.jsx and OPDcontent.jsx.
+export default function EmergencyContent() {
   const { alerts: rawAlerts, loading, error, resolveAlert, createAlert } = useEmergencyAlerts();
 
   // FIX: rawAlerts can be undefined (before the fetch settles) or a
-  // non-array error body (e.g. {message: "..."} from a 403 when there's
-  // no hospital yet) — calling .map()/.length on that directly threw
-  // "alerts.map is not a function". Normalize to an array once, here,
-  // and use `alerts` everywhere below instead of `rawAlerts`.
+  // non-array error body (e.g. {message: "..."} from a 403) — calling
+  // .map()/.length on that directly threw "alerts.map is not a
+  // function". Normalize to an array once, here, and use `alerts`
+  // everywhere below instead of `rawAlerts`.
   const alerts = Array.isArray(rawAlerts) ? rawAlerts : [];
 
   const [formOpen, setFormOpen] = useState(false);

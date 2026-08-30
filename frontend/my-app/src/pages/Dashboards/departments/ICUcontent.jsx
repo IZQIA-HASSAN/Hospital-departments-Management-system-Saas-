@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { BedDouble, HeartPulse, UserRound, Search, X } from "lucide-react";
-import { useHospital } from "../../../useHospital";
 
 // Router is mounted with app.use("/api/icu", icuRouter) and icuRouter's own
 // routes now start at "/" (see routes/icu.js), so the base is just
@@ -116,10 +115,21 @@ const ICUcontent = () => {
   const [search, setSearch] = useState("");
   const [debouncedsearch, setDebouncedsearch] = useState("");
 
-  // ADDED: check whether the logged-in admin/staff's hospital actually
-  // exists before doing anything ICU-related.
-  const { data: hospital, isLoading: hospitalLoading } = useHospital();
-  const hasHospital = !!hospital;
+  // REMOVED: a hospital-existence gate used to sit here, backed by
+  // useHospital() (GET /api/hospitals/me). That endpoint is intentionally
+  // admin-only on the backend (authorize("admin")) — it means "the
+  // hospital I administer," not "the hospital I belong to." For a staff
+  // account it 403s every single time, which made `hasHospital` always
+  // false and permanently blocked staff from ever seeing ICU beds,
+  // showing a "create your hospital" message they have no ability (or
+  // need) to act on.
+  //
+  // It's also unnecessary: GET /api/icu is already scoped correctly for
+  // BOTH admin and staff by the backend's attachHospitalId middleware
+  // (see middleware/resolveHospital.js), which resolves the caller's
+  // hospital from their own account (admin -> ownership lookup, staff ->
+  // their stored hospitalId) and 403s with a real, specific message if
+  // that's genuinely missing. No frontend pre-check needed.
 
   // No hospitalId here — the backend resolves it from the logged-in
   // user's token (see middleware/resolveHospital.js), so every user only
@@ -134,9 +144,6 @@ const ICUcontent = () => {
     queryKey: bedsKey,
     queryFn: () => getallbeds(),
     refetchInterval: 15000,
-    // FIX: don't fetch ICU beds at all until a hospital exists — avoids
-    // the guaranteed 403 and the console noise that came with it.
-    enabled: hasHospital,
   });
 
   const addMutation = useMutation({
@@ -225,25 +232,6 @@ const ICUcontent = () => {
     (readyMutation.isError && "Couldn't mark bed ready.") ||
     (deleteMutation.isError && "Couldn't remove bed.") ||
     null;
-
-  // ADDED: while we're still checking hospital status, show nothing
-  // alarming — just a lightweight loading line.
-  if (hospitalLoading) {
-    return <p className="text-sm text-neutral-400">Loading…</p>;
-  }
-
-  // ADDED: no hospital yet — don't render the form/list/search at all,
-  // since none of it can do anything useful without one.
-  if (!hasHospital) {
-    return (
-      <div className="rounded-xl border border-dashed border-neutral-300 bg-white p-10 text-center">
-        <p className="font-serif text-lg text-neutral-700">No hospital set up yet</p>
-        <p className="mt-1 text-sm text-neutral-400">
-          Create your hospital from the Dashboard before adding ICU beds.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div>
