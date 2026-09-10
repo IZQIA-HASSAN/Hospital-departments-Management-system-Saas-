@@ -41,7 +41,7 @@ export default function NotificationBell() {
   }, []);
 
   return (
-    <div className="relative" ref={panelRef}>
+    <div className="relative " ref={panelRef}>
       <button
         onClick={() => setOpen((o) => !o)}
         className="relative rounded-full p-2 text-neutral-500 hover:bg-neutral-100"

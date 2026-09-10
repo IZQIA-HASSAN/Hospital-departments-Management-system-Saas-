@@ -115,6 +115,22 @@ const ICUcontent = () => {
   const [search, setSearch] = useState("");
   const [debouncedsearch, setDebouncedsearch] = useState("");
 
+  // Close the modal on Escape, and lock background scroll while it's open
+  // so the beds list behind it can't be scrolled/interacted with.
+  useEffect(() => {
+    if (!showForm) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setShowForm(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [showForm]);
+
   // REMOVED: a hospital-existence gate used to sit here, backed by
   // useHospital() (GET /api/hospitals/me). That endpoint is intentionally
   // admin-only on the backend (authorize("admin")) — it means "the
@@ -206,6 +222,11 @@ const ICUcontent = () => {
     addMutation.mutate({ ...form, age: Number(form.age) });
   };
 
+  const closeForm = () => {
+    setShowForm(false);
+    setForm(EMPTY_FORM);
+  };
+
   const occupied = beds.filter((b) => b.status === "occupied");
   const critical = occupied.filter((b) => b.severity === "critical").length;
 
@@ -237,10 +258,10 @@ const ICUcontent = () => {
     <div>
       <div className="mb-4 flex items-center justify-end">
         <button
-          onClick={() => setShowForm((s) => !s)}
+          onClick={() => setShowForm(true)}
           className="rounded-lg bg-rose-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-700 focus:ring-offset-2"
         >
-          {showForm ? "Close" : "+ Add patient"}
+          + Add patient
         </button>
       </div>
 
@@ -250,51 +271,85 @@ const ICUcontent = () => {
         </div>
       )}
 
+      {/*
+        The form used to render inline above the beds list, so opening it
+        pushed the list down and resized the page. It's now a fixed-position
+        modal overlay: the beds list underneath never moves or resizes.
+      */}
       {showForm && (
-        <form
-          onSubmit={handleAdd}
-          className="mb-6 rounded-xl border border-neutral-200 bg-white p-6 text-left shadow-sm"
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/40 px-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeForm();
+          }}
         >
-          <h2 className="mb-4 text-sm font-semibold text-neutral-700">Admit to ICU</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Bed number" required>
-              <input required value={form.bedNumber} onChange={(e) => setForm({ ...form, bedNumber: e.target.value })} className="icu-input" placeholder="ICU-01" />
-            </Field>
-            <Field label="Patient name" required>
-              <input required value={form.patientName} onChange={(e) => setForm({ ...form, patientName: e.target.value })} className="icu-input" />
-            </Field>
-            <Field label="Age" required>
-              <input required type="number" min="0" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} className="icu-input" />
-            </Field>
-            <Field label="Gender" required>
-              <select value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })} className="icu-input">
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-            </Field>
-            <Field label="Contact">
-              <input value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} className="icu-input" />
-            </Field>
-            <Field label="Severity" required>
-              <select value={form.severity} onChange={(e) => setForm({ ...form, severity: e.target.value })} className="icu-input">
-                <option value="stable">Stable</option>
-                <option value="serious">Serious</option>
-                <option value="critical">Critical</option>
-              </select>
-            </Field>
-            <Field label="Diagnosis" span2>
-              <textarea rows={2} value={form.diagnosis} onChange={(e) => setForm({ ...form, diagnosis: e.target.value })} className="icu-input resize-none" />
-            </Field>
-          </div>
-          <button type="submit" disabled={addMutation.isPending} className="mt-5 rounded-lg bg-rose-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-800 disabled:opacity-50">
-            {addMutation.isPending ? "Admitting..." : "Admit patient"}
-          </button>
-          <style>{`
-            .icu-input { width: 100%; border: 1px solid #E5E5E5; border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; outline: none; }
-            .icu-input:focus { border-color: #BE123C; box-shadow: 0 0 0 2px rgba(190,18,60,0.15); }
-          `}</style>
-        </form>
+          <form
+            onSubmit={handleAdd}
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-neutral-200 bg-white p-6 text-left shadow-xl"
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-neutral-700">Admit to ICU</h2>
+              <button
+                type="button"
+                onClick={closeForm}
+                aria-label="Close"
+                className="rounded-full p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Bed number" required>
+                <input required value={form.bedNumber} onChange={(e) => setForm({ ...form, bedNumber: e.target.value })} className="icu-input" placeholder="ICU-01" />
+              </Field>
+              <Field label="Patient name" required>
+                <input required value={form.patientName} onChange={(e) => setForm({ ...form, patientName: e.target.value })} className="icu-input" />
+              </Field>
+              <Field label="Age" required>
+                <input required type="number" min="0" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} className="icu-input" />
+              </Field>
+              <Field label="Gender" required>
+                <select value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })} className="icu-input">
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </Field>
+              <Field label="Contact">
+                <input value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} className="icu-input" />
+              </Field>
+              <Field label="Severity" required>
+                <select value={form.severity} onChange={(e) => setForm({ ...form, severity: e.target.value })} className="icu-input">
+                  <option value="stable">Stable</option>
+                  <option value="serious">Serious</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </Field>
+              <Field label="Diagnosis" span2>
+                <textarea rows={2} value={form.diagnosis} onChange={(e) => setForm({ ...form, diagnosis: e.target.value })} className="icu-input resize-none" />
+              </Field>
+            </div>
+
+            <div className="mt-5 flex items-center gap-3">
+              <button type="submit" disabled={addMutation.isPending} className="rounded-lg bg-rose-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-800 disabled:opacity-50">
+                {addMutation.isPending ? "Admitting..." : "Admit patient"}
+              </button>
+              <button
+                type="button"
+                onClick={closeForm}
+                className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50"
+              >
+                Cancel
+              </button>
+            </div>
+
+            <style>{`
+              .icu-input { width: 100%; border: 1px solid #E5E5E5; border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; outline: none; }
+              .icu-input:focus { border-color: #BE123C; box-shadow: 0 0 0 2px rgba(190,18,60,0.15); }
+            `}</style>
+          </form>
+        </div>
       )}
 
       <div className="rounded-xl border border-neutral-200 bg-white text-left shadow-sm h-[390px] overflow-y-scroll">
@@ -422,4 +477,4 @@ function Field({ label, required, span2, children }) {
   );
 }
 
-export default ICUcontent
+export default ICUcontent;

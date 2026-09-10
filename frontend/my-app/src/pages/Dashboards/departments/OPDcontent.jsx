@@ -121,6 +121,22 @@ const OPDcontent = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
+  // Close the modal on Escape, and lock background scroll while it's
+  // open so the queue behind it can't be scrolled/interacted with.
+  useEffect(() => {
+    if (!showForm) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setShowForm(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [showForm]);
+
   const visitsKey = ["opd", "visits"];
 
   const {
@@ -177,6 +193,11 @@ const OPDcontent = () => {
     registerMutation.mutate({ ...form, age: Number(form.age) });
   };
 
+  const closeForm = () => {
+    setShowForm(false);
+    setForm(EMPTY_FORM);
+  };
+
   // only show today's waiting/in-progress patients in the "queue" view
   const todayStr = new Date().toISOString().split("T")[0];
   const queue = visits.filter(
@@ -205,10 +226,10 @@ const OPDcontent = () => {
     <div>
       <div className="mb-4 flex items-center justify-end">
         <button
-          onClick={() => setShowForm((s) => !s)}
+          onClick={() => setShowForm(true)}
           className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2"
         >
-          {showForm ? "Close" : "+ Register visit"}
+          + Register visit
         </button>
       </div>
 
@@ -218,47 +239,81 @@ const OPDcontent = () => {
         </div>
       )}
 
+      {/*
+        The form used to render inline above the queue, so opening it
+        pushed the list down and resized the page. It's now a fixed-position
+        modal overlay: the queue underneath never moves or resizes.
+      */}
       {showForm && (
-        <form
-          onSubmit={handleRegister}
-          className="mb-6 rounded-xl border border-neutral-200 bg-white p-6 text-left shadow-sm"
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/40 px-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeForm();
+          }}
         >
-          <h2 className="mb-4 text-sm font-semibold text-neutral-700">New OPD visit</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Patient name" required>
-              <input required value={form.patientName} onChange={(e) => setForm({ ...form, patientName: e.target.value })} className="opd-input" />
-            </Field>
-            <Field label="Age" required>
-              <input required type="number" min="0" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} className="opd-input" />
-            </Field>
-            <Field label="Gender" required>
-              <select value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })} className="opd-input">
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-            </Field>
-            <Field label="Contact" required>
-              <input required value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} className="opd-input" />
-            </Field>
-            <Field label="Department" required>
-              <input required value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} className="opd-input" />
-            </Field>
-            <Field label="Doctor">
-              <input value={form.doctorName} onChange={(e) => setForm({ ...form, doctorName: e.target.value })} className="opd-input" />
-            </Field>
-            <Field label="Reason for visit" span2>
-              <textarea rows={2} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} className="opd-input resize-none" />
-            </Field>
-          </div>
-          <button type="submit" disabled={registerMutation.isPending} className="mt-5 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-800 disabled:opacity-50">
-            {registerMutation.isPending ? "Registering..." : "Register & assign token"}
-          </button>
-          <style>{`
-            .opd-input { width: 100%; border: 1px solid #E5E5E5; border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; outline: none; }
-            .opd-input:focus { border-color: #047857; box-shadow: 0 0 0 2px rgba(4,120,87,0.15); }
-          `}</style>
-        </form>
+          <form
+            onSubmit={handleRegister}
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-neutral-200 bg-white p-6 text-left shadow-xl"
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-neutral-700">New OPD visit</h2>
+              <button
+                type="button"
+                onClick={closeForm}
+                aria-label="Close"
+                className="rounded-full p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Patient name" required>
+                <input required value={form.patientName} onChange={(e) => setForm({ ...form, patientName: e.target.value })} className="opd-input" />
+              </Field>
+              <Field label="Age" required>
+                <input required type="number" min="0" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} className="opd-input" />
+              </Field>
+              <Field label="Gender" required>
+                <select value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })} className="opd-input">
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </Field>
+              <Field label="Contact" required>
+                <input required value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} className="opd-input" />
+              </Field>
+              <Field label="Department" required>
+                <input required value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} className="opd-input" />
+              </Field>
+              <Field label="Doctor">
+                <input value={form.doctorName} onChange={(e) => setForm({ ...form, doctorName: e.target.value })} className="opd-input" />
+              </Field>
+              <Field label="Reason for visit" span2>
+                <textarea rows={2} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} className="opd-input resize-none" />
+              </Field>
+            </div>
+
+            <div className="mt-5 flex items-center gap-3">
+              <button type="submit" disabled={registerMutation.isPending} className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-800 disabled:opacity-50">
+                {registerMutation.isPending ? "Registering..." : "Register & assign token"}
+              </button>
+              <button
+                type="button"
+                onClick={closeForm}
+                className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-50"
+              >
+                Cancel
+              </button>
+            </div>
+
+            <style>{`
+              .opd-input { width: 100%; border: 1px solid #E5E5E5; border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; outline: none; }
+              .opd-input:focus { border-color: #047857; box-shadow: 0 0 0 2px rgba(4,120,87,0.15); }
+            `}</style>
+          </form>
+        </div>
       )}
 
       <div className="rounded-xl border border-neutral-200 bg-white text-left shadow-sm">
@@ -376,4 +431,4 @@ function Field({ label, required, span2, children }) {
   );
 }
 
-export default OPDcontent
+export default OPDcontent;
