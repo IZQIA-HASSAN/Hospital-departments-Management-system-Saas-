@@ -1,15 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { apiFetch } from "../utils/apiClient";
 
 const NotificationContext = createContext(null);
 
-
-
 const API_BASE = "http://localhost:5000/api/notifications";
-
-function authHeaders(extra = {}) {
-    const token = localStorage.getItem("token");
-    return { ...extra, ...(token ? { Authorization: `Bearer ${token}` } : {}) };
-}
 
 export function NotificationProvider({ children }) {
     const [notifications, setNotifications] = useState([]);
@@ -21,7 +15,7 @@ export function NotificationProvider({ children }) {
 
         const fetchNotifications = async () => {
             try {
-                const res = await fetch(`${API_BASE}?limit=30`, { headers: authHeaders() });
+                const res = await apiFetch(`${API_BASE}?limit=30`);
                 if (!res.ok) {
                     if (!cancelled) setNotifications([]);
                     return;
@@ -48,7 +42,7 @@ export function NotificationProvider({ children }) {
     const markOneRead = useCallback(async (id) => {
         setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
         try {
-            await fetch(`${API_BASE}/${id}/read`, { method: "PATCH", headers: authHeaders() });
+            await apiFetch(`${API_BASE}/${id}/read`, { method: "PATCH" });
         } catch (err) {
             console.error("Failed to mark notification read:", err);
         }
@@ -57,7 +51,7 @@ export function NotificationProvider({ children }) {
     const markAllRead = useCallback(async () => {
         setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
         try {
-            await fetch(`${API_BASE}/read-all`, { method: "PATCH", headers: authHeaders() });
+            await apiFetch(`${API_BASE}/read-all`, { method: "PATCH" });
         } catch (err) {
             console.error("Failed to mark all read:", err);
         }

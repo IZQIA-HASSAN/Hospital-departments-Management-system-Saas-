@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { User2, Clock, Search, X } from "lucide-react";
+import { apiFetch } from "../../../utils/apiClient";
 
 const API_BASE = "http://localhost:5000/api/opd";
 
@@ -21,32 +22,22 @@ const EMPTY_FORM = {
   reason: "",
 };
 
-function authHeaders(extra = {}) {
-  const token = localStorage.getItem("token");
-  return {
-    ...extra,
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
 async function getallvisits({ date, status, department } = {}) {
   const params = new URLSearchParams();
   if (date) params.set("date", date);
   if (status) params.set("status", status);
   if (department) params.set("department", department);
 
-  const res = await fetch(`${API_BASE}?${params.toString()}`, {
-    headers: authHeaders(),
-  });
+  const res = await apiFetch(`${API_BASE}?${params.toString()}`);
   if (!res.ok) throw new Error("Something went wrong fetching visits");
   const data = await res.json();
   return data.visits || [];
 }
 
 async function registervisit(payload) {
-  const res = await fetch(`${API_BASE}/register-visit`, {
+  const res = await apiFetch(`${API_BASE}/register-visit`, {
     method: "POST",
-    headers: authHeaders({ "Content-Type": "application/json" }),
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
   const data = await res.json().catch(() => ({}));
@@ -55,9 +46,9 @@ async function registervisit(payload) {
 }
 
 async function updateopdvisit({ id, status }) {
-  const res = await fetch(`${API_BASE}/update-visit-status/${id}`, {
+  const res = await apiFetch(`${API_BASE}/update-visit-status/${id}`, {
     method: "PATCH",
-    headers: authHeaders({ "Content-Type": "application/json" }),
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status }),
   });
   if (!res.ok) {
@@ -68,9 +59,8 @@ async function updateopdvisit({ id, status }) {
 }
 
 async function deletevisit({ id }) {
-  const res = await fetch(`${API_BASE}/${id}`, {
+  const res = await apiFetch(`${API_BASE}/${id}`, {
     method: "DELETE",
-    headers: authHeaders(),
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
@@ -80,9 +70,7 @@ async function deletevisit({ id }) {
 }
 
 async function getvisitbyID({ id }) {
-  const res = await fetch(`${API_BASE}/getopd-vist/${id}`, {
-    headers: authHeaders(),
-  });
+  const res = await apiFetch(`${API_BASE}/getopd-vist/${id}`);
   if (!res.ok) throw new Error("Failed to fetch visit");
   const data = await res.json();
   return data.visit;

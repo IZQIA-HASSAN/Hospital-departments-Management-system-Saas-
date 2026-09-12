@@ -6,6 +6,8 @@ import ICUpatientchart from "../../../components/ICUpatientchart";
 import OPDpatientschart from "../../../components/OPDpatientschart";
 import EmergencyChart from "../../../components/Emergencychart";
 
+import { apiFetch } from "../../../utils/apiClient.js";
+
 export default function Admindash() {
   const queryClient = useQueryClient();
 
@@ -29,11 +31,7 @@ export default function Admindash() {
   const hospitalQuery = useQuery({
     queryKey: ["myhospital"],
     queryFn: async () => {
-      const res = await fetch("http://localhost:5000/api/hospitals/me", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await apiFetch("http://localhost:5000/api/hospitals/me");
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to load hospital");
       return data.hospital;
@@ -46,11 +44,10 @@ export default function Admindash() {
 
   const createhospital = useMutation({
     mutationFn: async (formData) => {
-      const res = await fetch("http://localhost:5000/api/hospitals", {
+      const res = await apiFetch("http://localhost:5000/api/hospitals", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(formData),
       });
@@ -69,14 +66,14 @@ export default function Admindash() {
     createhospital.mutate(hospitalform);
   };
 
-  
 
-const { data: staffList = [] ,isLoading :staffLoading } = useQuery({
-  queryKey: ["staff"], // same key as in Staff.jsx — shares cache
-  queryFn: fetchStaff,
-});
 
-const onlineCount = staffList.filter((s) => s.isOnline).length;
+  const { data: staffList = [], isLoading: staffLoading } = useQuery({
+    queryKey: ["staff"], // same key as in Staff.jsx — shares cache
+    queryFn: fetchStaff,
+  });
+
+  const onlineCount = staffList.filter((s) => s.isOnline).length;
 
 
   return (
@@ -212,50 +209,50 @@ const onlineCount = staffList.filter((s) => s.isOnline).length;
       )}
       <div className="flex flex-col lg:flex-row gap-4 mb-8 items-stretch">
 
-  <div className="grid sm:grid-cols-2 gap-4 flex-1">
-    {hospitalQuery.data && (
-      <div className="border border-neutral-200 rounded-xl p-6 bg-white flex items-start gap-3">
-        <Building2 className="text-emerald-700 mt-0.5 shrink-0" size={22} />
-        <div className="min-w-0">
-          <p className="font-serif text-lg font-semibold truncate">{hospitalQuery.data.name}</p>
-          <p className="text-sm opacity-60 truncate">
-            {hospitalQuery.data.address}, {hospitalQuery.data.city}
-          </p>
-          {hospitalQuery.data.phone && (
-            <p className="text-sm opacity-60 truncate">{hospitalQuery.data.phone}</p>
+        <div className="grid sm:grid-cols-2 gap-4 flex-1">
+          {hospitalQuery.data && (
+            <div className="border border-neutral-200 rounded-xl p-6 bg-white flex items-start gap-3">
+              <Building2 className="text-emerald-700 mt-0.5 shrink-0" size={22} />
+              <div className="min-w-0">
+                <p className="font-serif text-lg font-semibold truncate">{hospitalQuery.data.name}</p>
+                <p className="text-sm opacity-60 truncate">
+                  {hospitalQuery.data.address}, {hospitalQuery.data.city}
+                </p>
+                {hospitalQuery.data.phone && (
+                  <p className="text-sm opacity-60 truncate">{hospitalQuery.data.phone}</p>
+                )}
+              </div>
+            </div>
           )}
+
+          <div className="border border-neutral-200 rounded-xl p-6 bg-white">
+            <span className="font-mono text-xs tracking-wide text-neutral-500">
+              STAFF ON ROSTER
+            </span>
+            <p className="font-serif text-3xl font-semibold mt-2">{onlineCount}</p>
+            <p className="text-sm opacity-60 mt-1">No staff added yet.</p>
+          </div>
         </div>
+
+
+
       </div>
-    )}
-
-    <div className="border border-neutral-200 rounded-xl p-6 bg-white">
-      <span className="font-mono text-xs tracking-wide text-neutral-500">
-        STAFF ON ROSTER
-      </span>
-      <p className="font-serif text-3xl font-semibold mt-2">{onlineCount}</p>
-      <p className="text-sm opacity-60 mt-1">No staff added yet.</p>
-    </div>
-  </div>
-
-  
-
-</div>
 
 
-{hospitalQuery.data && (
-  <div className="flex flex-col lg:flex-row gap-4">
-    <div className="w-full lg:w-[360px] shrink-0">
-      <ICUpatientchart />
-    </div>
-    <div className="w-full lg:w-[360px] shrink-0">
-      <OPDpatientschart />
-    </div>
-    <div className="w-full lg:w-[360px] shrink-0 mt-5">
-      <EmergencyChart />
-    </div>
-  </div>
-)}
-  
+      {hospitalQuery.data && (
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="w-full lg:w-[360px] shrink-0">
+            <ICUpatientchart />
+          </div>
+          <div className="w-full lg:w-[360px] shrink-0">
+            <OPDpatientschart />
+          </div>
+          <div className="w-full lg:w-[360px] shrink-0 mt-5">
+            <EmergencyChart />
+          </div>
+        </div>
+      )}
+
     </>
   );
 }

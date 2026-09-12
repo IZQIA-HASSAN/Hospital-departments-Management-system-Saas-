@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import NotificationBell from "../../../components/NotificationBell";
 import { NotificationProvider } from "../../../context/Notifycontext";
+import { apiFetch } from "../../../utils/apiClient";
 
 const DEPARTMENT_OPTIONS = [
   { label: "OPD", slug: "opd" },
@@ -31,9 +32,8 @@ export default function AdminLayout() {
 
   const handleLogout = async ()=>{
     try{
-       await fetch("http://localhost:5000/api/auth/logout" , {
+       await apiFetch("http://localhost:5000/api/auth/logout" , {
         method : "POST",
-        headers : {Authorization : `Bearer ${localStorage.getItem("token")}`},
       })
     }catch(err){
 console.error("Logout notification failed:", err);

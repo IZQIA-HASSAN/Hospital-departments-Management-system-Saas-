@@ -3,10 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Mail } from "lucide-react";
 import { useHospital } from "../../../useHospital.js";
 
+import { apiFetch } from "../../../utils/apiClient.js";
+
 export async function fetchStaff() {
-  const res = await fetch("http://localhost:5000/api/staff", {
-    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-  });
+  const res = await apiFetch("http://localhost:5000/api/staff");
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || "Failed to load staff");
   return data;
@@ -17,11 +17,10 @@ export async function fetchStaff() {
 // signup via the link in that email (POST /api/staff/staff-signup or
 // whatever your invite-completion route is).
 async function inviteStaff(payload) {
-  const res = await fetch("http://localhost:5000/api/staff/invite", {
+  const res = await apiFetch("http://localhost:5000/api/staff/invite", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
     },
     body: JSON.stringify(payload),
   });
@@ -31,9 +30,8 @@ async function inviteStaff(payload) {
 }
 
 async function removeStaff(id) {
-  const res = await fetch(`http://localhost:5000/api/staff/${id}`, {
+  const res = await apiFetch(`http://localhost:5000/api/staff/${id}`, {
     method: "DELETE",
-    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));

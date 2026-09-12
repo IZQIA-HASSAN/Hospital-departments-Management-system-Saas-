@@ -16,21 +16,13 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const API_BASE = "http://localhost:5000/api/opd";
+import { apiFetch } from "../utils/apiClient";
 
-function authHeaders(extra = {}) {
-  const token = localStorage.getItem("token");
-  return {
-    ...extra,
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
+const API_BASE = "http://localhost:5000/api/opd";
 
 export async function fetchTodaysVisits() {
   const today = new Date().toISOString().split("T")[0]; // matches visitDate's DATEONLY format
-  const res = await fetch(`${API_BASE}?date=${today}`, {
-    headers: authHeaders(),
-  });
+  const res = await apiFetch(`${API_BASE}?date=${today}`);
   if (!res.ok) throw new Error("Failed to fetch OPD visits");
   const data = await res.json();
   return data.visits || [];

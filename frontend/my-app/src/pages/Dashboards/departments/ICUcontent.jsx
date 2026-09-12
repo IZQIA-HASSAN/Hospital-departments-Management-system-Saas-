@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { BedDouble, HeartPulse, UserRound, Search, X } from "lucide-react";
+import { apiFetch } from "../../../utils/apiClient";
 
 // Router is mounted with app.use("/api/icu", icuRouter) and icuRouter's own
 // routes now start at "/" (see routes/icu.js), so the base is just
@@ -31,40 +32,26 @@ const EMPTY_FORM = {
 
 // --- API functions ---------------------------------------------------------
 
-// `protect` on the backend expects a Bearer token. Every request was 401ing
-// because none of the fetch calls below attached one. Adjust the
-// localStorage key ("token") here if your login flow stores it under a
-// different name (e.g. "authToken", "accessToken").
-function authHeaders(extra = {}) {
-  const token = localStorage.getItem("token");
-  return {
-    ...extra,
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
 async function getallbeds({ status, severity } = {}) {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
   if (severity) params.set("severity", severity);
 
-  const res = await fetch(`${API_BASE}?${params.toString()}`, {
-    headers: authHeaders(),
-  });
+  const res = await apiFetch(`${API_BASE}?${params.toString()}`);
   if (!res.ok) throw new Error("Something went wrong fetching ICU beds");
   return res.json();
 }
 
 async function getbedbyid({ id }) {
-  const res = await fetch(`${API_BASE}/${id}`, { headers: authHeaders() });
+  const res = await apiFetch(`${API_BASE}/${id}`);
   if (!res.ok) throw new Error("Failed to fetch bed");
   return res.json();
 }
 
 async function addpatient(payload) {
-  const res = await fetch(API_BASE, {
+  const res = await apiFetch(API_BASE, {
     method: "POST",
-    headers: authHeaders({ "Content-Type": "application/json" }),
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
   const data = await res.json();
@@ -73,9 +60,9 @@ async function addpatient(payload) {
 }
 
 async function dischargepatient({ id, disposition }) {
-  const res = await fetch(`${API_BASE}/${id}/discharge`, {
+  const res = await apiFetch(`${API_BASE}/${id}/discharge`, {
     method: "POST",
-    headers: authHeaders({ "Content-Type": "application/json" }),
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ disposition }),
   });
   if (!res.ok) {
@@ -86,9 +73,8 @@ async function dischargepatient({ id, disposition }) {
 }
 
 async function markbedready({ id }) {
-  const res = await fetch(`${API_BASE}/${id}/ready`, {
+  const res = await apiFetch(`${API_BASE}/${id}/ready`, {
     method: "POST",
-    headers: authHeaders(),
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
@@ -98,9 +84,8 @@ async function markbedready({ id }) {
 }
 
 async function deletebed({ id }) {
-  const res = await fetch(`${API_BASE}/${id}`, {
+  const res = await apiFetch(`${API_BASE}/${id}`, {
     method: "DELETE",
-    headers: authHeaders(),
   });
   if (!res.ok) throw new Error("Failed to delete bed");
   return true;

@@ -32,6 +32,7 @@ export default function Login() {
       const res = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials : "include",
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
@@ -42,7 +43,7 @@ export default function Login() {
       return data;
     },
     onSuccess: (data) => {
-      localStorage.setItem("token", data.token);
+      // localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       navigate(data.user.role === "admin" ? "/admin" : "/staff");
     },

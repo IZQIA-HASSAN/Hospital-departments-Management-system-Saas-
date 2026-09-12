@@ -17,21 +17,13 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import { apiFetch } from "../utils/apiClient";
+
 // Same base URL + auth pattern already used in ICUcontent.jsx.
 const API_BASE = "http://localhost:5000/api/icu";
 
-function authHeaders(extra = {}) {
-  const token = localStorage.getItem("token");
-  return {
-    ...extra,
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
 export async function fetchOccupiedBeds() {
-  const res = await fetch(`${API_BASE}?status=occupied`, {
-    headers: authHeaders(),
-  });
+  const res = await apiFetch(`${API_BASE}?status=occupied`);
   if (!res.ok) throw new Error("Failed to fetch ICU patients");
   return res.json();
 }

@@ -3,17 +3,19 @@ import User from "../models/User.js";
 import Staff from "../models/Staff.js";
 
 export const protect = async (req, res, next) => {
-  const header = req.headers.authorization;
-  if (!header || !header.startsWith("Bearer")) {
+  let token = req.cookies?.accessToken;
+
+  if (!token && req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+
+  if (!token) {
     return res.status(401).json({ message: "Not authorized, no token" });
   }
-  try {
-    const token = header.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // decoded.type is "admin" or "staff" — which table to query. This is
-    // NOT the same thing as a business role/job title (Staff.role), which
-    // can change independently without breaking login.
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+
     const account =
       decoded.type === "staff"
         ? await Staff.findByPk(decoded.id)

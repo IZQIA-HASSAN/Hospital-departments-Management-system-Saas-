@@ -1,24 +1,19 @@
 // src/hooks/useEmergencyAlerts.js
 import { useState, useEffect, useCallback } from "react";
+import { apiFetch } from "./utils/apiClient";
 
 const API_BASE = "http://localhost:5000/api/notifications";
-
-function authHeaders(extra = {}) {
-  const token = localStorage.getItem("token");
-  return { ...extra, ...(token ? { Authorization: `Bearer ${token}` } : {}) };
-}
 
 export function useEmergencyAlerts() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
-   
 
   useEffect(() => {
     let cancelled = false;
 
     const fetchAlerts = async () => {
       try {
-        const res = await fetch(`${API_BASE}/emergency/active`, { headers: authHeaders() });
+        const res = await apiFetch(`${API_BASE}/emergency/active`);
         const data = await res.json();
         if (!cancelled) setAlerts(data);
       } catch (err) {
@@ -40,20 +35,18 @@ export function useEmergencyAlerts() {
   const resolveAlert = useCallback(async (id) => {
     setAlerts((prev) => prev.filter((a) => a.id !== id)); // optimistic
     try {
-      await fetch(`${API_BASE}/emergency/${id}/resolve`, {
+      await apiFetch(`${API_BASE}/emergency/${id}/resolve`, {
         method: "PATCH",
-        headers: authHeaders(),
       });
     } catch (err) {
       console.error("Failed to resolve alert:", err);
     }
   }, []);
 
-
   const createAlert = useCallback(async ({patientName , age , info})=>{
-    const res = await fetch(`${API_BASE}/emergency` , {
+    const res = await apiFetch(`${API_BASE}/emergency` , {
       method : "POST",
-     headers: authHeaders({ "Content-Type": "application/json" }),
+      headers: { "Content-Type": "application/json" },
       body : JSON.stringify({patientName , age , info}),
     })
     if(!res.ok){

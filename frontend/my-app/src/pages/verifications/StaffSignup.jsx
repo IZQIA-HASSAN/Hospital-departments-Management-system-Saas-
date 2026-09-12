@@ -74,6 +74,7 @@ function StaffSignup() {
       const res = await fetch("http://localhost:5000/api/auth/signup-staff", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials:"include",
         body: JSON.stringify({ token, ...form }),
       });
       const data = await res.json();

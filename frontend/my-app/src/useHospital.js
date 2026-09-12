@@ -5,19 +5,10 @@
 // only hits the network once, not three times).
 
 import { useQuery } from "@tanstack/react-query";
-
-function authHeaders(extra = {}) {
-  const token = localStorage.getItem("token");
-  return {
-    ...extra,
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
+import { apiFetch } from "./utils/apiClient";
 
 async function fetchMyHospital() {
-  const res = await fetch("http://localhost:5000/api/hospitals/me", {
-    headers: authHeaders(),
-  });
+  const res = await apiFetch("http://localhost:5000/api/hospitals/me");
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || "Failed to load hospital");
   return data.hospital; // null if the admin hasn't created one yet

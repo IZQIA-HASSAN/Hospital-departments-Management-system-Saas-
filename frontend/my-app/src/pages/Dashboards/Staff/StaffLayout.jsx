@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { NotificationProvider } from "../../../context/Notifycontext";
 import NotificationBell from "../../../components/NotificationBell";
+import { apiFetch } from "../../../utils/apiClient";
 
 const DEPARTMENT_OPTIONS = [
   { label: "OPD", slug: "opd" },
@@ -38,9 +39,8 @@ export default function StaffLayout() {
 
   const handleLogout = async () => {
     try {
-     const res =  await fetch("http://localhost:5000/api/auth/logout", {
+     const res =  await apiFetch("http://localhost:5000/api/auth/logout", {
         method: "POST",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
        const data = await res.json().catch(() => ({}));
     console.log("Logout response:", res.status, data);
@@ -49,7 +49,7 @@ export default function StaffLayout() {
       // proceed with logout regardless — don't block the user from leaving
     }
 
-    localStorage.removeItem("token");
+    // localStorage.removeItem("token");
     localStorage.removeItem("user");
     alert("staff has logged-out")
     navigate("/Login");

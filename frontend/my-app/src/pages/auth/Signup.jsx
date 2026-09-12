@@ -46,6 +46,7 @@ export default function Signup() {
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials : "include",
         body: JSON.stringify(payload),
       });
       const data = await res.json();
@@ -53,7 +54,7 @@ export default function Signup() {
       return data;
     },
     onSuccess: (data) => {
-      localStorage.setItem("token", data.token);
+      // localStorage.setItem("token", data.token);as now cookies work there is no need to store token in localstorage
       localStorage.setItem("user", JSON.stringify(data.user));
       navigate(data.user.role === "admin" ? "/Admin" : "/Staff");
     },

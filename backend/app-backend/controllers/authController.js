@@ -1,5 +1,5 @@
 import User from "../models/User.js";
-import { generateToken, generaterefreshToken } from "../utils/generateToken.js"
+import { generateaccessToken, generaterefreshToken } from "../utils/generateToken.js"
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import Staff from "../models/Staff.js";
@@ -17,25 +17,25 @@ const REFRESH_COOKIE_NAME = "refreshToken"
 // cookie options
 const ACCESS_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production", //https only in production
-  sameSite: "lax",
+  secure: process.env.NODE_ENV === "production", // https only in production
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   maxAge: 15 * 60 * 1000,
-  path: "/api/auth/refresh",
-}
+  path: "/",
+};
 
-const REFRESH_COOKIE_OPTIONS={
-   httpOnly: true,
-  secure: process.env.NODE_ENV === "production", //https only in production
-  sameSite: "lax",
+const REFRESH_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production", // https only in production
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   maxAge: 7 * 24 * 60 * 60 * 1000,
   path: "/api/auth/refresh",
-}
+};
 
 // HELPER SET COOKIES FUNCTION
 
 const setcookie = (res , account , accounttype)=>{
-  const accessToken = generateToken(account , accounttype);
-  const refreshToken = generateToken(account , accounttype);
+  const accessToken = generateaccessToken(account , accounttype);
+  const refreshToken = generaterefreshToken(account , accounttype);
   res.cookie(ACCESS_COOKIE_NAME , accessToken , ACCESS_COOKIE_OPTIONS);
   res.cookie(REFRESH_COOKIE_NAME , refreshToken , REFRESH_COOKIE_OPTIONS);
 }
@@ -72,7 +72,6 @@ export const signup = async (req, res) => {
     setcookie(res , user , "admin")
 
     res.status(201).json({
-      token,
       user: { id: user.id, name: user.name, email: user.email, role: user.role, title: user.title },
     });
   } catch (err) {
@@ -113,7 +112,7 @@ export const signupStaff = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const decoded = jwt.verify(token, p rocess.env.JWT_INVITE_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_INVITE_SECRET);
 
     // FIX: check Staff, not User — that's where the record actually lives
     const existing = await Staff.findOne({ where: { email: decoded.email } });
@@ -206,7 +205,7 @@ export const unifiedLogin = async (req, res) => {
 
       console.log("user has logged in");
       return res.json({
-        token,
+        
         user: { id: user.id, name: user.name, email: user.email, role: user.role, title: user.title },
       });
     }
@@ -239,7 +238,6 @@ export const unifiedLogin = async (req, res) => {
       }).catch((err) => console.error("failed to create login notification:", err.message));
 
       return res.json({
-        token,
         user: { id: staff.id, name: staff.name, email: staff.email, role: staff.role, hospitalName: hospital?.name || null },
       });
     }
@@ -257,8 +255,8 @@ export const logout = async (req, res) => {
   try {
     // Clear the refresh token cookie so it can no longer be used to
     // mint new access tokens — path must match what was set on login.
-    res.clearCookie(ACCESS_COOKIE_NAME, { path: "/" });
-    res.clearCookie(REFRESH_COOKIE_NAME , {path : "/api/auth/refresh"})
+    res.clearCookie(ACCESS_COOKIE_NAME, ACCESS_COOKIE_OPTIONS);
+    res.clearCookie(REFRESH_COOKIE_NAME, REFRESH_COOKIE_OPTIONS);
 
 
     if (req.accounttype === "staff") {
@@ -389,27 +387,26 @@ export const refresh = async (req, res) => {
   try {
     const token = req.cookies[REFRESH_COOKIE_NAME];
     if (!token) {
-      return res.status(401).json({ message: "No refresh Token provided" })
-
+      return res.status(401).json({ message: "No refresh Token provided" });
     }
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET)
+      decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
     } catch (err) {
-      return res.status(401).json({ message: "invalid or expired refresh token " })
+      return res.status(401).json({ message: "Invalid or expired refresh token" });
     }
 
-    const account = decoded.type === "admin" ? await User.findByPk(decoded.id) : await Staff.findByPk(decoded.id)
+    const account = decoded.type === "admin" ? await User.findByPk(decoded.id) : await Staff.findByPk(decoded.id);
 
     if (!account) {
-      return res.status(401).json({ message: "Account no longer exists" })
+      return res.status(401).json({ message: "Account no longer exists" });
     }
 
-    const newAccessToken = generateToken(account, decoded.type)
-    res.cookie(ACCESS_COOKIE_NAME , newAccessToken , ACCESS_COOKIE_OPTIONS)
+    const newAccessToken = generateaccessToken(account, decoded.type);
+    res.cookie(ACCESS_COOKIE_NAME, newAccessToken, ACCESS_COOKIE_OPTIONS);
+    return res.status(200).json({ message: "Access token refreshed" });
   } catch (err) {
     console.error("refreshAccess token error", err);
-    res.status(500).json({ message: "Server error" })
-
+    res.status(500).json({ message: "Server error" });
   }
-}
+};
