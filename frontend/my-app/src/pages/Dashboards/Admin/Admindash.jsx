@@ -242,19 +242,19 @@ const onlineCount = staffList.filter((s) => s.isOnline).length;
 </div>
 
 
-<div className="flex flex-col lg:flex-row gap-4">
-  <div className="w-full lg:w-[360px] shrink-0">
-    <ICUpatientchart />
+{hospitalQuery.data && (
+  <div className="flex flex-col lg:flex-row gap-4">
+    <div className="w-full lg:w-[360px] shrink-0">
+      <ICUpatientchart />
+    </div>
+    <div className="w-full lg:w-[360px] shrink-0">
+      <OPDpatientschart />
+    </div>
+    <div className="w-full lg:w-[360px] shrink-0 mt-5">
+      <EmergencyChart />
+    </div>
   </div>
-
-  <div className="w-full lg:w-[360px] shrink-0">
-    <OPDpatientschart />
-  </div>
-
-  <div className="w-full lg:w-[360px] shrink-0 mt-5">
-    <EmergencyChart />
-  </div>
-</div>
+)}
   
     </>
   );

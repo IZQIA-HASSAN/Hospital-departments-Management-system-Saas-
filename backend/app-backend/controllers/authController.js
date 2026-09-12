@@ -7,11 +7,20 @@ import { sendEmail } from "../utils/sendEmail.js";
 import { resolveHospitalId } from "../middleware/resolveHospital.js";
 import { notify } from "../utils/notificationService.js";
 import Hospital from "../models/Hospital.js";
+import { signupschema , staffsignup , loginSchema } from "../schemas/auth_schema.js";
+
 
 
 export const signup = async (req, res) => {
   try {
-    const { name, email, password, title } = req.body;
+    const result = signupschema.safeParse(req.body)
+    if(!result.success){
+      return res.status(400).json({
+        message:"Validation failed",
+        errors :result.error.flatten().fieldErrors,
+      })
+    }
+    const { name, email, password, title } = result.data
 
     if (!name || !email || !password || !title) {
       return res.status(400).json({ message: "All fields are required" });
@@ -27,7 +36,7 @@ export const signup = async (req, res) => {
       title,
       role: "admin",
     });
-    console.log("uuer created", user.name, user.email, user.role)
+    console.log("user created", user.name, user.email, user.role)
 
     const token = generateToken(user, "admin");
     res.status(201).json({
@@ -59,7 +68,14 @@ export const verifyInvite = async (req, res) => {
 
 export const signupStaff = async (req, res) => {
   try {
-    const { token, password, name, title } = req.body;
+    const result = staffsignup.safeParse(req.body)
+    if(!result.success){
+      return res.status(400).json({
+        message : "validation failed",
+        errors :result.error.flatten().fieldErrors,
+      })
+    }
+    const { token, password, name, title } = result.data
 
     if (!token || !password || !name) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -134,7 +150,14 @@ export const signupStaff = async (req, res) => {
 
 export const unifiedLogin = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const result  = loginSchema.safeParse(req.body)
+    if(!result.success){
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: result.error.flatten().fieldErrors,
+      });
+    }
+    const { email, password } = result.data
 
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required" });
