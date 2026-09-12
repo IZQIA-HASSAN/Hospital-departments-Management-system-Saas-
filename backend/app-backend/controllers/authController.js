@@ -1,5 +1,5 @@
 import User from "../models/User.js";
-import generateToken from "../utils/generateToken.js";
+import { generateToken, generaterefreshToken } from "../utils/generateToken.js"
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import Staff from "../models/Staff.js";
@@ -7,17 +7,48 @@ import { sendEmail } from "../utils/sendEmail.js";
 import { resolveHospitalId } from "../middleware/resolveHospital.js";
 import { notify } from "../utils/notificationService.js";
 import Hospital from "../models/Hospital.js";
-import { signupschema , staffsignup , loginSchema } from "../schemas/auth_schema.js";
+import { signupschema, staffsignup, loginSchema } from "../schemas/auth_schema.js";
+
+const ACCESS_COOKIE_NAME = "accessToken"
+const REFRESH_COOKIE_NAME = "refreshToken"
+
+
+
+// cookie options
+const ACCESS_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production", //https only in production
+  sameSite: "lax",
+  maxAge: 15 * 60 * 1000,
+  path: "/api/auth/refresh",
+}
+
+const REFRESH_COOKIE_OPTIONS={
+   httpOnly: true,
+  secure: process.env.NODE_ENV === "production", //https only in production
+  sameSite: "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  path: "/api/auth/refresh",
+}
+
+// HELPER SET COOKIES FUNCTION
+
+const setcookie = (res , account , accounttype)=>{
+  const accessToken = generateToken(account , accounttype);
+  const refreshToken = generateToken(account , accounttype);
+  res.cookie(ACCESS_COOKIE_NAME , accessToken , ACCESS_COOKIE_OPTIONS);
+  res.cookie(REFRESH_COOKIE_NAME , refreshToken , REFRESH_COOKIE_OPTIONS);
+}
 
 
 
 export const signup = async (req, res) => {
   try {
     const result = signupschema.safeParse(req.body)
-    if(!result.success){
+    if (!result.success) {
       return res.status(400).json({
-        message:"Validation failed",
-        errors :result.error.flatten().fieldErrors,
+        message: "Validation failed",
+        errors: result.error.flatten().fieldErrors,
       })
     }
     const { name, email, password, title } = result.data
@@ -38,7 +69,8 @@ export const signup = async (req, res) => {
     });
     console.log("user created", user.name, user.email, user.role)
 
-    const token = generateToken(user, "admin");
+    setcookie(res , user , "admin")
+
     res.status(201).json({
       token,
       user: { id: user.id, name: user.name, email: user.email, role: user.role, title: user.title },
@@ -69,10 +101,10 @@ export const verifyInvite = async (req, res) => {
 export const signupStaff = async (req, res) => {
   try {
     const result = staffsignup.safeParse(req.body)
-    if(!result.success){
+    if (!result.success) {
       return res.status(400).json({
-        message : "validation failed",
-        errors :result.error.flatten().fieldErrors,
+        message: "validation failed",
+        errors: result.error.flatten().fieldErrors,
       })
     }
     const { token, password, name, title } = result.data
@@ -81,7 +113,7 @@ export const signupStaff = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_INVITE_SECRET);
+    const decoded = jwt.verify(token, p rocess.env.JWT_INVITE_SECRET);
 
     // FIX: check Staff, not User — that's where the record actually lives
     const existing = await Staff.findOne({ where: { email: decoded.email } });
@@ -100,7 +132,7 @@ export const signupStaff = async (req, res) => {
       hospitalId: decoded.hospitalId,
     });
 
-    const sessionToken = generateToken(staff, "staff")
+    setcookie(res, staff , "staff")
 
     // FIX: this was missing — hospitalName below referenced `hospital`
     // without ever declaring/fetching it, throwing ReferenceError.
@@ -120,13 +152,13 @@ export const signupStaff = async (req, res) => {
         lastSeen: staff.lastSeen,
       });
     }
-   
+
 
     console.log(`new staff account created: ${staff.email}`);
 
     return res.status(201).json({
       message: "Signup successful",
-      token: sessionToken,
+       
       user: {
         id: staff.id,
         name: staff.name,
@@ -150,8 +182,8 @@ export const signupStaff = async (req, res) => {
 
 export const unifiedLogin = async (req, res) => {
   try {
-    const result  = loginSchema.safeParse(req.body)
-    if(!result.success){
+    const result = loginSchema.safeParse(req.body)
+    if (!result.success) {
       return res.status(400).json({
         message: "Validation failed",
         errors: result.error.flatten().fieldErrors,
@@ -166,10 +198,11 @@ export const unifiedLogin = async (req, res) => {
     // Try admin/User table first
     const user = await User.findOne({ where: { email } });
     if (user && (await user.matchPassword(password))) {
-      const token = generateToken(user, "admin");
+      
+    setcookie(res , user , "admin")
 
       const hospitalId = await resolveHospitalId(user, "admin");
-      
+
 
       console.log("user has logged in");
       return res.json({
@@ -181,14 +214,18 @@ export const unifiedLogin = async (req, res) => {
     // Fall back to Staff table
     const staff = await Staff.findOne({ where: { email } });
     if (staff && (await bcrypt.compare(password, staff.passwordHash))) {
-      const token = generateToken(staff, "staff");
+      setcookie(res , staff , "staff")
+
       const hospitalId = await resolveHospitalId(staff, "staff");
       if (!hospitalId) {
         return res.status(403).json({ message: "Staff does not exist for this hospital" });
       }
 
+
       // FIX: this was missing — same ReferenceError as signupStaff above.
       const hospital = await Hospital.findByPk(hospitalId);
+
+      
 
       // Fire-and-forget: don't await this, and don't let it block/fail the login.
       // Must run BEFORE the return below, and inside this if-block, or it never executes.
@@ -203,7 +240,7 @@ export const unifiedLogin = async (req, res) => {
 
       return res.json({
         token,
-        user: { id: staff.id, name: staff.name, email: staff.email, role: staff.role , hospitalName : hospital?.name || null },
+        user: { id: staff.id, name: staff.name, email: staff.email, role: staff.role, hospitalName: hospital?.name || null },
       });
     }
 
@@ -218,6 +255,12 @@ export const unifiedLogin = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
+    // Clear the refresh token cookie so it can no longer be used to
+    // mint new access tokens — path must match what was set on login.
+    res.clearCookie(ACCESS_COOKIE_NAME, { path: "/" });
+    res.clearCookie(REFRESH_COOKIE_NAME , {path : "/api/auth/refresh"})
+
+
     if (req.accounttype === "staff") {
       const hospitalId = await resolveHospitalId(req.user, "staff")
       if (hospitalId) {
@@ -241,101 +284,132 @@ export const logout = async (req, res) => {
 }
 
 
-  // forgot password controller 
+// forgot password controller 
 
 
-  export const forgotPassword = async (req, res) => {
-    try {
-      const { email } = req.body;
-      if (!email) {
-        return res.status(400).json({ message: "email is required" })
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "email is required" })
 
-      }
+    }
 
-      // now check both tables to find the correct email to send invite link
+    // now check both tables to find the correct email to send invite link
 
-      const user = await User.findOne({ where: { email } })
-      let staff = null;
-      if (!user) {
-        staff = await Staff.findOne({ where: { email } })
+    const user = await User.findOne({ where: { email } })
+    let staff = null;
+    if (!user) {
+      staff = await Staff.findOne({ where: { email } })
 
-      }
-      const account = user || staff
-      const accounttype = user ? "user" : "staff"
-      if (!account) {
-        return res.status(200).json({
-          message: "If that email is registered, a reset link has been sent.",
-        });
-      }
+    }
+    const account = user || staff
+    const accounttype = user ? "user" : "staff"
+    if (!account) {
+      return res.status(200).json({
+        message: "If that email is registered, a reset link has been sent.",
+      });
+    }
 
-      const resetToken = jwt.sign(
-        { id: account.id, type: accounttype, purpose: "password-reset" },
-        process.env.JWT_RESET_SECRET,
-        { expiresIn: "15m" }
-      )
+    const resetToken = jwt.sign(
+      { id: account.id, type: accounttype, purpose: "password-reset" },
+      process.env.JWT_RESET_SECRET,
+      { expiresIn: "15m" }
+    )
 
-      const link = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    const link = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
-      await sendEmail({
-        to: email,
-        subject: "Reset your Round password",
-        html: `
+    await sendEmail({
+      to: email,
+      subject: "Reset your Round password",
+      html: `
         <p>You requested a password reset.</p>
         <p><a href="${link}">Click here to set a new password</a></p>
         <p>This link expires in 15 minutes. If you didn't request this, ignore this email.</p>
       `,
-      });
-      console.log(`password reset email sent to: ${email}`);
-      return res.status(200).json({
-        message: "If that email is registered, a reset link has been sent.",
-      });
-    } catch (err) {
-      console.error("forgotPassword error:", err);
-      res.status(500).json({ message: "Something went wrong. Please try again." });
-    }
+    });
+    console.log(`password reset email sent to: ${email}`);
+    return res.status(200).json({
+      message: "If that email is registered, a reset link has been sent.",
+    });
+  } catch (err) {
+    console.error("forgotPassword error:", err);
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
+}
 
-  // now resetting password
+// now resetting password
 
-  export const resetPassword = async (req, res) => {
-    try {
-      const { token, password } = req.body;
-      if (!token || !password) {
-        return res.status(400).json({ message: "Token and new password are required" });
-      }
-      if (password.length < 6) {
-        return res.status(400).json({ message: "Password must be at least 6 characters" });
-      }
-
-      let decoded;
-      try {
-        decoded = jwt.verify(token, process.env.JWT_RESET_SECRET);
-      } catch (err) {
-        return res.status(400).json({ message: "Invalid or expired reset link" });
-      }
-
-      if (decoded.purpose !== "password-reset") {
-        return res.status(400).json({ message: "Invalid reset token" });
-      }
-
-      if (decoded.type === "user") {
-        const user = await User.findByPk(decoded.id);
-        if (!user) return res.status(400).json({ message: "Account not found" });
-        // Assumes User model hashes password automatically via a beforeSave hook,
-        // matching how signup/User.create() already handles it.
-        user.password = password;
-        await user.save();
-      } else {
-        const staff = await Staff.findByPk(decoded.id);
-        if (!staff) return res.status(400).json({ message: "Account not found" });
-        staff.passwordHash = await bcrypt.hash(password, 10);
-        await staff.save();
-      }
-
-      console.log(`password reset completed for ${decoded.type} id ${decoded.id}`);
-      return res.status(200).json({ message: "Password updated successfully" });
-    } catch (err) {
-      console.error("resetPassword error:", err);
-      res.status(500).json({ message: "Something went wrong. Please try again." });
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ message: "Token and new password are required" });
     }
-  };
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_RESET_SECRET);
+    } catch (err) {
+      return res.status(400).json({ message: "Invalid or expired reset link" });
+    }
+
+    if (decoded.purpose !== "password-reset") {
+      return res.status(400).json({ message: "Invalid reset token" });
+    }
+
+    if (decoded.type === "user") {
+      const user = await User.findByPk(decoded.id);
+      if (!user) return res.status(400).json({ message: "Account not found" });
+      // Assumes User model hashes password automatically via a beforeSave hook,
+      // matching how signup/User.create() already handles it.
+      user.password = password;
+      await user.save();
+    } else {
+      const staff = await Staff.findByPk(decoded.id);
+      if (!staff) return res.status(400).json({ message: "Account not found" });
+      staff.passwordHash = await bcrypt.hash(password, 10);
+      await staff.save();
+    }
+
+    console.log(`password reset completed for ${decoded.type} id ${decoded.id}`);
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error("resetPassword error:", err);
+    res.status(500).json({ message: "Something went wrong. Please try again." });
+  }
+};
+
+// refresh token 
+
+export const refresh = async (req, res) => {
+  try {
+    const token = req.cookies[REFRESH_COOKIE_NAME];
+    if (!token) {
+      return res.status(401).json({ message: "No refresh Token provided" })
+
+    }
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET)
+    } catch (err) {
+      return res.status(401).json({ message: "invalid or expired refresh token " })
+    }
+
+    const account = decoded.type === "admin" ? await User.findByPk(decoded.id) : await Staff.findByPk(decoded.id)
+
+    if (!account) {
+      return res.status(401).json({ message: "Account no longer exists" })
+    }
+
+    const newAccessToken = generateToken(account, decoded.type)
+    res.cookie(ACCESS_COOKIE_NAME , newAccessToken , ACCESS_COOKIE_OPTIONS)
+  } catch (err) {
+    console.error("refreshAccess token error", err);
+    res.status(500).json({ message: "Server error" })
+
+  }
+}

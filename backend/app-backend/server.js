@@ -9,11 +9,19 @@ import Staffroutes from "./routes/Staffroutes.js";
 import OPDroutes from "./routes/OPDroutes.js";
 import ICUroutes from "./routes/ICUroutes.js";
 import notifications from "./routes/notifications.js"
+import cookieParser from "cookie-parser"
 
 const app = express();
 
 app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
+app.use(cookieParser())
+
+
+app.use(cors({
+ origin : "http://localhost:5173",
+ credentials :true,    
+}))
 
 app.use("/api/auth", authRoutes);
 app.use("/api/hospitals", Hospitalroutes);

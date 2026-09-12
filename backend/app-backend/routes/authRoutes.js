@@ -3,6 +3,7 @@ import { signup , verifyInvite , signupStaff , unifiedLogin , forgotPassword , r
 import { protect } from "../middleware/auth.js";
 import { authorize } from "../middleware/checkRole.js";
 import { logout } from "../controllers/authController.js";
+import { refresh } from "../controllers/authController.js";
 
 const router = express.Router();
 
@@ -13,6 +14,8 @@ router.post("/signup-staff", signupStaff);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.post("/logout" , protect , logout)
+
+router.post("/refresh" , refresh)
 
 
 router.get("/admindash", protect, authorize("admin"), (req, res) => {
