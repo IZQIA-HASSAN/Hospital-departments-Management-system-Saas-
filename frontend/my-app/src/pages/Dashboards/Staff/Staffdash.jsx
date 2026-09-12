@@ -41,16 +41,6 @@ export default function StaffDash() {
   });
   const opdCount = opdLoading ? null : opdVisits.length;
 
-  // NOTE: socket connection management was removed from here entirely.
-  // It now lives solely in StaffLayout.jsx via useSocketConnection() —
-  // that component wraps every staff tab and never unmounts on
-  // navigation, so the connection stays alive for the whole session.
-  // Having it here too meant every tab switch away from Dashboard called
-  // socket.disconnect() on the shared singleton, killing the connection
-  // the layout depended on. If this page needs to LISTEN for socket
-  // events (not manage the connection), add a separate useEffect here
-  // with only socket.on(...)/socket.off(...) — no connect()/disconnect().
-
   return (
     <>
       <div>

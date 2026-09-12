@@ -1,6 +1,4 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import socket from "../socket.js";                          // the shared instance
-import { useSocketConnection } from "../useSocketConnection.js"; // handles connect/disconnect lifecycle
 
 const NotificationContext = createContext(null);
 
@@ -17,22 +15,14 @@ export function NotificationProvider({ children }) {
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // This hook owns connect-on-mount / disconnect-on-unmount for the socket.
-    // Since NotificationProvider wraps your whole admin dashboard layout,
-    // this effectively means: connect on dashboard load, disconnect on logout.
-    useSocketConnection();
-
-    // Fetch notification history once
+    // Fetch notification history and poll every 15 seconds
     useEffect(() => {
         let cancelled = false;
-        (async () => {
+
+        const fetchNotifications = async () => {
             try {
                 const res = await fetch(`${API_BASE}?limit=30`, { headers: authHeaders() });
                 if (!res.ok) {
-                    // Expected before a hospital exists (403) or right after
-                    // login. Treat as "no notifications yet" instead of
-                    // storing the error body — {message: "..."} isn't an
-                    // array and crashes the .filter() below.
                     if (!cancelled) setNotifications([]);
                     return;
                 }
@@ -44,18 +34,15 @@ export function NotificationProvider({ children }) {
             } finally {
                 if (!cancelled) setLoading(false);
             }
-        })();
-        return () => { cancelled = true; };
-    }, []);
+        };
 
-    // Listen for live pushes. Separate effect from useSocketConnection —
-    // that hook owns connect/disconnect, this one just owns this one listener.
-    useEffect(() => {
-        function handleNew(notification) {
-            setNotifications((prev) => [notification, ...prev]);
-        }
-        socket.on("notification:new", handleNew);
-        return () => socket.off("notification:new", handleNew);
+        fetchNotifications();
+        const intervalId = setInterval(fetchNotifications, 15000);
+
+        return () => { 
+            cancelled = true; 
+            clearInterval(intervalId);
+        };
     }, []);
 
     const markOneRead = useCallback(async (id) => {

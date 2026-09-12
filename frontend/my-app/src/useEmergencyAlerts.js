@@ -1,6 +1,5 @@
 // src/hooks/useEmergencyAlerts.js
 import { useState, useEffect, useCallback } from "react";
-import socket from "./socket";
 
 const API_BASE = "http://localhost:5000/api/notifications";
 
@@ -16,7 +15,8 @@ export function useEmergencyAlerts() {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+
+    const fetchAlerts = async () => {
       try {
         const res = await fetch(`${API_BASE}/emergency/active`, { headers: authHeaders() });
         const data = await res.json();
@@ -26,22 +26,14 @@ export function useEmergencyAlerts() {
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+    };
 
-  useEffect(() => {
-    function handleNew(alert) {
-      setAlerts((prev) => [alert, ...prev]);
-    }
-    function handleResolved({ id }) {
-      setAlerts((prev) => prev.filter((a) => a.id !== id));
-    }
-    socket.on("emergency:new", handleNew);
-    socket.on("emergency:resolved", handleResolved);
-    return () => {
-      socket.off("emergency:new", handleNew);
-      socket.off("emergency:resolved", handleResolved);
+    fetchAlerts();
+    const intervalId = setInterval(fetchAlerts, 15000);
+
+    return () => { 
+        cancelled = true; 
+        clearInterval(intervalId);
     };
   }, []);
 

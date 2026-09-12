@@ -6,7 +6,6 @@ import sequelize from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import Hospitalroutes from "./routes/Hospitalroutes.js";
 import Staffroutes from "./routes/Staffroutes.js";
-import initsocket from "./utils/Socketmanager.js";
 import OPDroutes from "./routes/OPDroutes.js";
 import ICUroutes from "./routes/ICUroutes.js";
 import notifications from "./routes/notifications.js"
@@ -24,7 +23,6 @@ app.use("/api/icu", ICUroutes);
 app.use("/api/notifications" ,notifications)
 
 const server = http.createServer(app);
-initsocket(server); // FIXED: this was imported but never called — Socket.io was never actually running
 
 sequelize
   .authenticate()

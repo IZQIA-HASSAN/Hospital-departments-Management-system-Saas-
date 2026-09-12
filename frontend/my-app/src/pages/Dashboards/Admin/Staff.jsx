@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Mail } from "lucide-react";
-import socket, { connectSocket } from "../../../socket.js";
 import { useHospital } from "../../../useHospital.js";
 
 export async function fetchStaff() {
@@ -66,6 +65,7 @@ export default function Staff() {
     queryKey: ["staff"],
     queryFn: fetchStaff,
     enabled: hasHospital, // don't hit /api/staff until a hospital exists
+    refetchInterval: 15000, // poll every 15 seconds
   });
 
   const inviteMutation = useMutation({
@@ -86,41 +86,7 @@ export default function Staff() {
     },
   });
 
-  useEffect(() => {
-    // No hospital yet — don't open a socket or subscribe to staff events.
-    if (!hasHospital) return;
 
-    connectSocket();
-
-    const onStatusChanged = ({ id, isOnline }) => {
-      queryClient.setQueryData(["staff"], (old = []) =>
-        old.map((s) => (s.id === id ? { ...s, isOnline } : s))
-      );
-    };
-
-    const onAdded = (newStaff) => {
-      queryClient.setQueryData(["staff"], (old = []) =>
-        old.find((s) => s.id === newStaff.id) ? old : [...old, newStaff]
-      );
-    };
-
-    const onDeleted = (id) => {
-      queryClient.setQueryData(["staff"], (old = []) =>
-        old.filter((s) => s.id !== id)
-      );
-    };
-
-    socket.on("staff:statusChanged", onStatusChanged);
-    socket.on("staff:added", onAdded);
-    socket.on("staff:deleted", onDeleted);
-
-    return () => {
-      socket.off("staff:statusChanged", onStatusChanged);
-      socket.off("staff:added", onAdded);
-      socket.off("staff:deleted", onDeleted);
-      socket.disconnect();
-    };
-  }, [queryClient, hasHospital]);
 
   const handleInvite = (e) => {
     e.preventDefault();

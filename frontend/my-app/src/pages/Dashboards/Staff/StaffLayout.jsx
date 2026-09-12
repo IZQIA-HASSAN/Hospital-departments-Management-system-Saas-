@@ -20,9 +20,7 @@ const DEPARTMENT_OPTIONS = [
 ];
 
 export default function StaffLayout() {
-  // useSocketConnection() removed — NotificationProvider below already
-  // owns the connect/disconnect lifecycle. Calling it here too would
-  // create two competing owners of the same socket instance.
+  // NotificationProvider below handles data polling.
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
