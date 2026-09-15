@@ -93,7 +93,7 @@ export default function EmergencyContent() {
           </h2>
         </div>
 
-        <div className="overflow-y-auto h-[420px]">
+        <div className="overflow-y-scroll  h-[420px]">
           {loading ? (
             <p className="px-6 py-6 text-sm text-neutral-400">Loading...</p>
           ) : alerts.length === 0 ? (

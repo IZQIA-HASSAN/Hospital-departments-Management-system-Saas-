@@ -63,3 +63,29 @@ export const loginSchema = z.object({
     .min(1, "Password is required"),
 });
 
+export const changeEmailSchema = z.object({
+  email : z
+  .string({required_error:"Email is required"})
+  .trim()
+  .toLowerCase()
+  .email("Enter a valid email"),
+
+
+})
+
+export const changePasswordSchema = z.object({
+  currentpassword : z.string({required_error:"Current password is required"}).min(1),
+  newPassword:z
+  .string({required_error:"New password is required"})
+  .min(8 , "Passwod must be atleast 8 characters long")
+  .max(15 , "Max length for password is 15 characters")
+  .regex(/[A-Z]/," Password must contain an upper-case letter")
+  .regex(/[a-z]/ , "password must containa lower-case letter")
+  .regex(/[0-9]/ , "password must contain numbers"),
+
+  confirmNewPassword : z.string(),
+})
+.refine((data)=> data.newPassword === data.confirmNewPassword , {
+  message : "Passwords donot match",
+  path : ["confirmNewpassword"],
+})

@@ -16,15 +16,15 @@ export default function EmergencyPanel() {
   if (alerts.length === 0) return null; // hide entirely when nothing active — don't clutter the dashboard
 
   return (
-    <div className="mb-6 rounded-xl border border-red-200 bg-red-50 overflow-hidden">
-      <div className="flex items-center gap-2 border-b border-red-200 px-4 py-3">
+    <div className="mb-6 rounded-xl bg-red-50 overflow-y-scroll ">
+      <div className="flex items-center gap-2 border-b border-red-200 px-4 py-3 overflow-y-scroll ">
         <Siren className="h-4 w-4 text-red-600" />
         <h2 className="text-sm font-semibold text-red-700">
           Active emergencies ({alerts.length})
         </h2>
       </div>
 
-      <ul className="divide-y divide-red-100">
+      <ul className="divide-y divide-red-100 border">
         {alerts.map((alert) => (
           <li key={alert.id} className="flex items-center justify-between px-4 py-3">
             <div>
