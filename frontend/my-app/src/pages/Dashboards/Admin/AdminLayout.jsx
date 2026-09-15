@@ -12,6 +12,7 @@ const DEPARTMENT_OPTIONS = [
   { label: "OPD", slug: "opd" },
   { label: "ICU", slug: "icu" },
   { label: "Emergency", slug: "emergency" },
+  // { label: "Settings", slug: "settings" },
 ];
 
 export default function AdminLayout() {
@@ -102,7 +103,7 @@ console.error("Logout notification failed:", err);
               </div>
 
               <Link
-                to="/admin/settings"
+                to="/admin/Adminsettings"
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${isActive("/admin/settings") ? "bg-emerald-800 text-neutral-50" : "text-emerald-100/70 hover:bg-emerald-900 hover:text-neutral-50"}`}
               >

@@ -4,6 +4,7 @@ import { protect } from "../middleware/auth.js";
 import { authorize } from "../middleware/checkRole.js";
 import { logout } from "../controllers/authController.js";
 import { refresh } from "../controllers/authController.js";
+import { getMe } from "../controllers/authController.js";
 
 const router = express.Router();
 
@@ -16,6 +17,7 @@ router.post("/reset-password", resetPassword);
 router.post("/logout" , protect , logout)
 
 router.post("/refresh" , refresh)
+router.get("/me", protect, getMe)
 
 
 router.get("/admindash", protect, authorize("admin"), (req, res) => {

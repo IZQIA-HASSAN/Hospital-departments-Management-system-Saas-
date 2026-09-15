@@ -142,7 +142,7 @@ export default function StaffLayout() {
               </div>
 
               <Link
-                to="/staff/settings"
+                to="/staff/Staffsettings"
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                   isActive("/staff/settings")

@@ -128,6 +128,7 @@ export const signupStaff = async (req, res) => {
       email: decoded.email,
       passwordHash,
       role: decoded.role,
+      title,
       hospitalId: decoded.hospitalId,
     });
 
@@ -259,7 +260,7 @@ export const logout = async (req, res) => {
     res.clearCookie(REFRESH_COOKIE_NAME, REFRESH_COOKIE_OPTIONS);
 
 
-    if (req.accounttype === "staff") {
+    if (req.accountType === "staff") {
       const hospitalId = await resolveHospitalId(req.user, "staff")
       if (hospitalId) {
         notify({
@@ -410,3 +411,15 @@ export const refresh = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const getMe = async (req, res) => {
+    try {
+        const { id, name, email, title } = req.user
+        return res.status(200).json({
+            user: { id, name, email, title, role: req.accountType },
+        })
+    } catch (err) {
+        console.error("getMe error:", err)
+        res.status(500).json({ message: "Server error" })
+    }
+}

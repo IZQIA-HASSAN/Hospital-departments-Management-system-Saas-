@@ -12,7 +12,7 @@ import StaffSignup from "./pages/verifications/StaffSignup";
 import AdminLayout from "./pages/Dashboards/Admin/AdminLayout";
 import Admindash from "./pages/Dashboards/Admin/Admindash";
 import Staff from "./pages/Dashboards/Admin/Staff";
-import Settings from "./pages/Dashboards/Admin/Settings";
+import Settings from "./pages/Dashboards/Admin/Adminsettings";
 
 import StaffLayout from "./pages/Dashboards/Staff/StaffLayout";
 import Staffdash from "./pages/Dashboards/Staff/Staffdash";
@@ -28,6 +28,8 @@ import ResetPassword from "./pages/auth/ResetPassword"; // adjust path
 import OPDcontent from "./pages/Dashboards/departments/OPDcontent";
 import EmergencyPanel from "./components/EmergencyPanel";
 import EmergencyContent from "./pages/Dashboards/departments/EmergencyContent";
+import Adminsettings from "./pages/Dashboards/Admin/Adminsettings";
+import Staffsettings from "./pages/Dashboards/Staff/Staffsettings"
 
 import "./App.css";
 
@@ -63,7 +65,8 @@ function App() {
         <Route index element={<Admindash />} />
         <Route path="staff" element={<Staff />} />
         <Route path="departments/:slug" element={<DepartmentPage />} />
-        <Route path="settings" element={<Settings />} />
+        
+        <Route path="Adminsettings" element={<Adminsettings />} />
       </Route>
 
       {/* Staff dashboard — role-guarded only.
@@ -80,7 +83,7 @@ function App() {
       >
         <Route index element={<Staffdash />} />
         <Route path="departments/:slug" element={<DepartmentPage />} />
-        <Route path="settings" element={<Settings />} />
+        <Route path="Staffsettings" element={<Staffsettings />} />
       </Route>
     </Routes>
   );

@@ -10,25 +10,11 @@ function timeAgo(dateStr) {
   return `${Math.floor(diff / 3600)}h ago`;
 }
 
-// REMOVED: this used to be a wrapper that gated <EmergencyAlerts /> behind
-// useHospital() (GET /api/hospitals/me) before mounting it. That endpoint
-// is intentionally admin-only on the backend — for staff it 403s every
-// time, which meant staff could never open this page at all, always
-// seeing "create your hospital first."
-//
-// It's also unnecessary: the notifications/emergency routes
-// (routes/notifications.js) are already scoped correctly for BOTH admin
-// and staff via attachHospitalId, same as ICU and OPD — no frontend
-// hospital pre-check needed. Same class of bug, same fix, as
-// ICUcontent.jsx and OPDcontent.jsx.
+
 export default function EmergencyContent() {
   const { alerts: rawAlerts, loading, error, resolveAlert, createAlert } = useEmergencyAlerts();
 
-  // FIX: rawAlerts can be undefined (before the fetch settles) or a
-  // non-array error body (e.g. {message: "..."} from a 403) — calling
-  // .map()/.length on that directly threw "alerts.map is not a
-  // function". Normalize to an array once, here, and use `alerts`
-  // everywhere below instead of `rawAlerts`.
+  
   const alerts = Array.isArray(rawAlerts) ? rawAlerts : [];
 
   const [formOpen, setFormOpen] = useState(false);

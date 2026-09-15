@@ -3,7 +3,7 @@ import { invitestaff, delstaff, getstaff } from "../controllers/Staffcontroller.
 import { protect } from "../middleware/auth.js";
 import { authorize } from "../middleware/checkRole.js";
 // import { attachHospitalId } from "../middleware/resolveHospital.js";
-import { attachHospitalId } from "../middleware/Resolvehospital.js";
+import { attachHospitalId } from "../middleware/resolveHospital.js";
 
 const router = express.Router();
 
