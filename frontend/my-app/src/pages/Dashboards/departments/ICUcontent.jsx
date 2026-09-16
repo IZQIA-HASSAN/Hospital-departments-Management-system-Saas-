@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { BedDouble, HeartPulse, UserRound, Search, X } from "lucide-react";
 import { apiFetch } from "../../../utils/apiClient";
+// import ReportDownloadButton from "../../../components/reports/ReportDownloadButton";
 
 // Router is mounted with app.use("/api/icu", icuRouter) and icuRouter's own
 // routes now start at "/" (see routes/icu.js), so the base is just
@@ -116,25 +117,7 @@ const ICUcontent = () => {
     };
   }, [showForm]);
 
-  // REMOVED: a hospital-existence gate used to sit here, backed by
-  // useHospital() (GET /api/hospitals/me). That endpoint is intentionally
-  // admin-only on the backend (authorize("admin")) — it means "the
-  // hospital I administer," not "the hospital I belong to." For a staff
-  // account it 403s every single time, which made `hasHospital` always
-  // false and permanently blocked staff from ever seeing ICU beds,
-  // showing a "create your hospital" message they have no ability (or
-  // need) to act on.
-  //
-  // It's also unnecessary: GET /api/icu is already scoped correctly for
-  // BOTH admin and staff by the backend's attachHospitalId middleware
-  // (see middleware/resolveHospital.js), which resolves the caller's
-  // hospital from their own account (admin -> ownership lookup, staff ->
-  // their stored hospitalId) and 403s with a real, specific message if
-  // that's genuinely missing. No frontend pre-check needed.
 
-  // No hospitalId here — the backend resolves it from the logged-in
-  // user's token (see middleware/resolveHospital.js), so every user only
-  // ever sees/edits their own hospital's beds.
   const bedsKey = ["icu", "beds"];
 
   const {
@@ -242,6 +225,7 @@ const ICUcontent = () => {
   return (
     <div>
       <div className="mb-4 flex items-center justify-end">
+        
         <button
           onClick={() => setShowForm(true)}
           className="rounded-lg bg-rose-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-800 focus:outline-none focus:ring-2 focus:ring-rose-700 focus:ring-offset-2"

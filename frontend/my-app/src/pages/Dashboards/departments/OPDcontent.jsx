@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { User2, Clock, Search, X } from "lucide-react";
 import { apiFetch } from "../../../utils/apiClient";
+import ReportDownloadButton from "../../../components/reports/ReportDownloadButton";
 
 const API_BASE = "http://localhost:5000/api/opd";
 

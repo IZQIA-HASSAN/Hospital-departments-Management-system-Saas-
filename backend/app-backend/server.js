@@ -10,6 +10,7 @@ import OPDroutes from "./routes/OPDroutes.js";
 import ICUroutes from "./routes/ICUroutes.js";
 import notifications from "./routes/notifications.js"
 import SettingsRoute from "./routes/SettingRoutes.js"
+import Reportroutes from "./routes/Reportroutes.js"
 import cookieParser from "cookie-parser"
 
 const app = express();
@@ -31,6 +32,7 @@ app.use("/api/opd", OPDroutes);
 app.use("/api/icu", ICUroutes);
 app.use("/api/notifications" ,notifications)
 app.use("/api/account" , SettingsRoute)
+app.use("/api/Reports" , Reportroutes)
 
 const server = http.createServer(app);
 

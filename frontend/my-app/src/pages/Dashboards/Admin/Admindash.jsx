@@ -5,6 +5,7 @@ import { fetchStaff } from "./Staff";
 import ICUpatientchart from "../../../components/ICUpatientchart";
 import OPDpatientschart from "../../../components/OPDpatientschart";
 import EmergencyChart from "../../../components/Emergencychart";
+import ReportsMenu from "../../../components/reports/ReportsMenu.jsx";
 
 import { apiFetch } from "../../../utils/apiClient.js";
 
@@ -81,9 +82,13 @@ export default function Admindash() {
       <span className="block font-mono text-xs tracking-[0.14em] text-emerald-700 mb-2">
         DASHBOARD
       </span>
-      <h1 className="font-serif font-semibold text-3xl sm:text-4xl mb-8">
+      <span className="flex justify-between"><h1 className="font-serif font-semibold text-3xl sm:text-4xl mb-8">
         {user ? `Welcome, ${user.name}.` : "Welcome back."}
       </h1>
+      <ReportsMenu/>
+      </span>
+      
+      
 
       {hospitalQuery.isLoading && (
         <p className="text-sm opacity-60 mb-6">Checking hospital setup…</p>
