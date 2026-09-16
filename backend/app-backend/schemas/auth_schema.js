@@ -64,14 +64,10 @@ export const loginSchema = z.object({
 });
 
 export const changeEmailSchema = z.object({
-  email : z
-  .string({required_error:"Email is required"})
-  .trim()
-  .toLowerCase()
-  .email("Enter a valid email"),
-
-
-})
+  oldEmail: z.string().email("Invalid current email address"),
+  newEmail: z.string().email("Invalid new email address"),
+  password: z.string().min(1, "Password is required"),
+});
 
 export const changePasswordSchema = z.object({
   currentpassword : z.string({required_error:"Current password is required"}).min(1),

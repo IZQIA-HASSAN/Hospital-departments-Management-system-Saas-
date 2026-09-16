@@ -7,8 +7,8 @@ const router = express.Router()
 
 
 
-router.patch("/email" , ChangeEmail)
-router.patch("/password" , changePassword)
+router.patch("/email" ,protect, ChangeEmail)
+router.patch("/password" ,protect, changePassword)
 router.patch("/hospital" , protect ,authorize("admin") , updateHospital)
 
 export default router

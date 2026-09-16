@@ -7,32 +7,68 @@ import { changePasswordSchema } from "../schemas/auth_schema.js"
 import { resolveHospitalId } from "../middleware/resolveHospital.js"
 
 export const ChangeEmail = async (req, res) => {
-    try {
-        const result = changeEmailSchema.safeParse(req.body)
-        if (!result.success) {
-            return res.status(400).json({
-                message: "Validation failed",
-                errors: result.error.flatten().fieldErrors,
-            })
-        }
-    
-        const { email } = result.data
-        const Model = req.accountType === "staff" ? Staff : User
-
-        const exists = await Model.findOne({ where: { email } })
-        if (exists) {
-            return res.status(400).json({ message: "email already in use " })
-        }
-        req.user.email = email
-        await req.user.save();
-        return res.json({ message: "Email is updated", email: req.user.email })
-        console.log("email is updated successfully !")
-    } catch (err) {
-        console.error("change email error", err)
-        res.status(500).json({ message: "Server error" })
-
+  try {
+    // 1. Validate body input
+    const result = changeEmailSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: result.error.flatten().fieldErrors,
+      });
     }
-}
+
+    const { oldEmail, newEmail, password } = result.data;
+
+    // 2. Verify old email matches current user session
+    if (req.user.email !== oldEmail) {
+      return res.status(400).json({
+        message: "Old email does not match our records!",
+      });
+    }
+
+    // 3. Verify password
+    const isPasswordValid = await bcrypt.compare(password, req.user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        message: "Password does not match our records!",
+      });
+    }
+
+    // 4. Check that newEmail is not taken in EITHER table
+    const userExists = await User.findOne({ where: { email: newEmail } });
+    const staffExists = await Staff.findOne({ where: { email: newEmail } });
+
+    if (userExists || staffExists) {
+      return res.status(400).json({ message: "Email is already taken" });
+    }
+
+    // 5. Update the specific table based on account type
+    if (req.accountType === "staff") {
+      const staffMember = await Staff.findByPk(req.user.id);
+      if (!staffMember) return res.status(404).json({ message: "Staff not found" });
+
+      staffMember.email = newEmail;
+      await staffMember.save();
+    } else {
+      const adminUser = await User.findByPk(req.user.id);
+      if (!adminUser) return res.status(404).json({ message: "User not found" });
+
+      adminUser.email = newEmail;
+      await adminUser.save();
+    }
+
+    // Keep session object up to date
+    req.user.email = newEmail;
+
+    return res.json({
+      message: "Email updated successfully",
+      email: newEmail,
+    });
+  } catch (err) {
+    console.error("Change email error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
 
 export const changePassword = async (req, res) => {
     try {
