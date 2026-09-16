@@ -70,36 +70,42 @@ export const ChangeEmail = async (req, res) => {
   }
 };
 
+// change password settings
+
 export const changePassword = async (req, res) => {
-    try {
-        const result = changePasswordSchema.safeParse(req.body)
-        if (!result.success) {
-            return res.status(400).json({
-                message: "Validation failed",
-                errors: result.error.flatten().fieldErrors
-            })
-        }
-
-        const { currentPassword, newPassword } = result.data
-
-        if (req.accountType !== "staff" && req.accountType !== "admin") {
-            return res.status(403).json({ message: "Not authorized to change password" })
-        }
-
-        const match = await bcrypt.compare(currentPassword, req.user.password)
-        if (!match) {
-            return res.status(400).json({ message: "current password is incorrect" })
-        }
-
-        req.user.password = await bcrypt.hash(newPassword, 10)
-        await req.user.save()
-
-        return res.json({ message: "Password updated successfully" })
-    } catch (err) {
-        console.error("change password error", err)
-        res.status(500).json({ message: "Server error" })
+  try {
+    const result = changePasswordSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: result.error.flatten().fieldErrors,
+      });
     }
-}
+
+    const { currentPassword, newPassword } = result.data;
+
+    // Verify account type
+    if (req.accountType !== "staff" && req.accountType !== "admin") {
+      return res.status(403).json({ message: "Not authorized to change password" });
+    }
+
+    // Verify current password
+    const match = await bcrypt.compare(currentPassword, req.user.password);
+    if (!match) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    // Update password on req.user (works for both User and Staff models)
+    req.user.password = await bcrypt.hash(newPassword, 10);
+    await req.user.save();
+
+    return res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error("Change password error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+       
 
 export const updateHospital = async (req, res) => {
     try {
