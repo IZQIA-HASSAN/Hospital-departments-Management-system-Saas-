@@ -6,6 +6,9 @@ import { changeEmailSchema } from "../schemas/auth_schema.js"
 import { changePasswordSchema } from "../schemas/auth_schema.js"
 import { resolveHospitalId } from "../middleware/resolveHospital.js"
 
+// password  filed helper 
+const getPasswordField = (accountType) => (accountType === "staff" ? "passwordHash" : "password");
+
 export const ChangeEmail = async (req, res) => {
   try {
     // 1. Validate body input
@@ -27,7 +30,9 @@ export const ChangeEmail = async (req, res) => {
     }
 
     // 3. Verify password
-    const isPasswordValid = await bcrypt.compare(password, req.user.password);
+    // ChangeEmail
+    const passwordField = getPasswordField(req.accountType);
+    const isPasswordValid = await bcrypt.compare(password, req.user[passwordField]);
     if (!isPasswordValid) {
       return res.status(401).json({
         message: "Password does not match our records!",
@@ -90,13 +95,14 @@ export const changePassword = async (req, res) => {
     }
 
     // Verify current password
-    const match = await bcrypt.compare(currentPassword, req.user.password);
+    const passwordField = getPasswordField(req.accountType);
+    const match = await bcrypt.compare(currentPassword, req.user[passwordField]);
     if (!match) {
       return res.status(400).json({ message: "Current password is incorrect" });
     }
 
     // Update password on req.user (works for both User and Staff models)
-    req.user.password = await bcrypt.hash(newPassword, 10);
+    req.user[passwordField] = await bcrypt.hash(newPassword, 10);
     await req.user.save();
 
     return res.json({ message: "Password updated successfully" });
@@ -105,29 +111,29 @@ export const changePassword = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
-       
+
 
 export const updateHospital = async (req, res) => {
-    try {
-        if (req.accountType !== "admin") {
-            return res.status(403).json({ message: "Only admins can update hospital info" })
-        }
-        const hospitalid = await resolveHospitalId(req.user, "admin")
-        if (!hospitalid) return res.status(404).json({ message: "No hospital found " })
-
-        const hospital = await Hospital.findByPk(hospitalid)
-        if (!hospital) return res.status(404).json({ message: "Hospital not found" })
-
-        const { name, address, city, phone } = req.body
-        if (name !== undefined) hospital.name = name
-        if (address !== undefined) hospital.address = address
-        if (city !== undefined) hospital.city = city
-        if (phone !== undefined) hospital.phone = phone
-
-        await hospital.save()
-        return res.json({ message: "Hospital info updated", hospital })
-    } catch (err) {
-        console.error("updated hospital info error ", err)
-        return res.status(500).json({ message: "Error updating the hospital" })
+  try {
+    if (req.accountType !== "admin") {
+      return res.status(403).json({ message: "Only admins can update hospital info" })
     }
+    const hospitalid = await resolveHospitalId(req.user, "admin")
+    if (!hospitalid) return res.status(404).json({ message: "No hospital found " })
+
+    const hospital = await Hospital.findByPk(hospitalid)
+    if (!hospital) return res.status(404).json({ message: "Hospital not found" })
+
+    const { name, address, city, phone } = req.body
+    if (name !== undefined) hospital.name = name
+    if (address !== undefined) hospital.address = address
+    if (city !== undefined) hospital.city = city
+    if (phone !== undefined) hospital.phone = phone
+
+    await hospital.save()
+    return res.json({ message: "Hospital info updated", hospital })
+  } catch (err) {
+    console.error("updated hospital info error ", err)
+    return res.status(500).json({ message: "Error updating the hospital" })
+  }
 }

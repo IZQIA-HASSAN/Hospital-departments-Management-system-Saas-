@@ -49,4 +49,4 @@ export const getMyHospital = async () => {
 }
 
 export const updateHospital = (data) =>
-  request(HOSPITAL_API_BASE, "/hospital", "PATCH", data)
+  request(API_BASE, "/hospital", "PATCH", data)
