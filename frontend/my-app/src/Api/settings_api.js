@@ -26,7 +26,7 @@ async function request(baseUrl, path = "", method = "GET", body = null) {
 
 // User / Account Endpoints
 export const getMe = async () => {
-  const data = await request(API_BASE, "/me")
+  const data = await request(HOSPITAL_API_BASE, "/me")
   return data.user
 }
 

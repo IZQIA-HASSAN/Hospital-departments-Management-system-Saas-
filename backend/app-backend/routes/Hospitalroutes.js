@@ -1,5 +1,5 @@
 import express from "express";
-import { createhospital, getmyhospital } from "../controllers/hospitalController.js";
+import { createhospital , getmyhospital } from "../controllers/Hospitalcontroller.js";
 import { protect } from "../middleware/auth.js";
 import { authorize } from "../middleware/checkRole.js";
 
