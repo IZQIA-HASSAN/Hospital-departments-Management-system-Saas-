@@ -56,7 +56,7 @@ export default function ICUpatientchart() {
   const noData = !isLoading && (isError || totalPatients === 0);
 
   return (
-    <div className="border border-neutral-200 rounded-xl p-6 bg-white">
+    <div className="border border-neutral-200 rounded-xl p-6 bg-white ">
       <div className="flex items-center justify-between">
         <span className="font-mono text-xs tracking-wide text-neutral-500">
           ICU PATIENTS BY SEVERITY

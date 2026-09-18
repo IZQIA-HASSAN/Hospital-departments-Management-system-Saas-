@@ -78,11 +78,12 @@ export default function Admindash() {
 
 
   return (
-    <>
-      <span className="block font-mono text-xs tracking-[0.14em] text-emerald-700 mb-2">
+    <div >
+      <span className="block font-mono text-xs tracking-[0.14em] text-emerald-700 ">
         DASHBOARD
       </span>
-      <span className="flex justify-between"><h1 className="font-serif font-semibold text-3xl sm:text-4xl mb-8">
+      <span className="flex justify-between ">
+        <h1 className="font-serif font-semibold text-3xl sm:text-4xl mb-8 ">
         {user ? `Welcome, ${user.name}.` : "Welcome back."}
       </h1>
       <ReportsMenu/>
@@ -245,7 +246,7 @@ export default function Admindash() {
 
 
       {hospitalQuery.data && (
-        <div className="flex flex-col lg:flex-row gap-4">
+        <div className="flex flex-col lg:flex-row gap-4  ">
           <div className="w-full lg:w-[360px] shrink-0">
             <ICUpatientchart />
           </div>
@@ -258,6 +259,6 @@ export default function Admindash() {
         </div>
       )}
 
-    </>
+    </div>
   );
 }

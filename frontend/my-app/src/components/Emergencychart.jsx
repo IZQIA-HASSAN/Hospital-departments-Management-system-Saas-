@@ -39,7 +39,7 @@ export default function EmergencyChart() {
   const chartData = useMemo(() => bucketByHour(alerts), [alerts]);
 
   return (
-    <div className="rounded-xl border border-red-200 bg-red-50 p-4 w-full">
+    <div className="rounded-xl border border-red-200 bg-red-50 p-4 w-full ">
       <div className="flex items-center gap-2 mb-1">
         <Siren className="h-4 w-4 text-red-600" />
         <span className="text-xs font-semibold text-red-700 tracking-wide">

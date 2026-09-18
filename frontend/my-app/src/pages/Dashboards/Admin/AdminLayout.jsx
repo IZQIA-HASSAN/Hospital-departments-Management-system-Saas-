@@ -48,7 +48,7 @@ console.error("Logout notification failed:", err);
 
   return (
     <NotificationProvider>
-      <div className="min-h-screen bg-neutral-50 text-neutral-900 lg:grid lg:grid-cols-[240px_1fr] ">
+      <div className="h-screen bg-neutral-50 text-neutral-900 lg:grid lg:grid-cols-[240px_1fr]  overflow-y-hidden  ">
         <div className="flex items-center justify-between px-5 py-4 border-b  border-neutral-200 lg:hidden">
           <span className="font-serif font-bold text-lg">Round</span>
           <button onClick={() => setSidebarOpen((v) => !v)} className="text-neutral-700">
