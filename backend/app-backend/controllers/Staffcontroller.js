@@ -2,27 +2,46 @@ import Staff from "../models/Staff.js";
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../utils/sendEmail.js";
 
+const STALE_MS = 30 * 1000; // no heartbeat/request in 30s => treated as offline
+
 // GET /api/staff
 export const getstaff = async (req, res) => {
   try {
     const staff = await Staff.findAll({
       where: { hospitalId: req.hospitalId },
       attributes: { exclude: ["passwordHash"] },
-      order: [
-        ["isOnline", "DESC"],
-        ["name", "ASC"],
-      ],
+      order: [["lastSeen", "DESC"], ["name", "ASC"]],
     });
-    res.json(staff);
+
+    const now = Date.now();
+    const result = staff.map((s) => {
+      const plain = s.toJSON();
+      const secondsSinceSeen = plain.lastSeen
+        ? now - new Date(plain.lastSeen).getTime()
+        : Infinity;
+      // isOnline is computed here, not trusted from the stored column —
+      // this is what makes tab-close/crash/no-logout self-correct without
+      // needing to detect the disconnect event at all.
+      plain.isOnline = secondsSinceSeen < STALE_MS;
+      return plain;
+    });
+
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
+// POST /api/staff/heartbeat
+// Body can be empty — protect middleware already refreshes lastSeen for
+// any authenticated request. This route exists purely so the frontend has
+// something cheap to ping on an interval even when the staff member isn't
+// otherwise triggering requests.
+export const heartbeat = (req, res) => {
+  res.status(200).json({ ok: true });
+};
+
 // DELETE /api/staff/:id
-// Previously looked up by id alone — any admin could delete any hospital's
-// staff member just by knowing/guessing their UUID. Now scoped so a staff
-// row from a different hospital simply doesn't match and 404s.
 export const delstaff = async (req, res) => {
   try {
     const { id } = req.params;
@@ -32,8 +51,6 @@ export const delstaff = async (req, res) => {
     }
     await staff.destroy();
 
-    // Scoped to this hospital's room only — previously io.emit() broadcast
-    // to every connected browser regardless of hospital.
     const io = req.app.get("io");
     if (io) io.to(`hospital:${req.hospitalId}`).emit("staff:deleted", id);
 

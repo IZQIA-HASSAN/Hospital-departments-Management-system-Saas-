@@ -2,6 +2,8 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import Staff from "../models/Staff.js";
 
+const HEARTBEAT_WRITE_THROTTLE_MS = 20 * 1000;      
+
 export const protect = async (req, res, next) => {
   let token = req.cookies?.accessToken;
 
@@ -20,6 +22,14 @@ export const protect = async (req, res, next) => {
       decoded.type === "staff"
         ? await Staff.findByPk(decoded.id)
         : await User.findByPk(decoded.id);
+
+     if (decoded.type === "staff") {
+      const last = account.lastSeen ? new Date(account.lastSeen).getTime() : 0;
+      if (Date.now() - last > HEARTBEAT_WRITE_THROTTLE_MS) {
+        account.lastSeen = new Date();
+        await account.save();
+      }
+    }
 
     if (!account) {
       return res.status(401).json({ message: "User does not exist" });

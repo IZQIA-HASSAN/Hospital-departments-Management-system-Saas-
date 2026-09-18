@@ -13,6 +13,7 @@ import {
 import { NotificationProvider } from "../../../context/Notifycontext";
 import NotificationBell from "../../../components/NotificationBell";
 import { apiFetch } from "../../../utils/apiClient";
+import { useHeartbeat } from "../../../hooks/useHeartbeat";
 
 const DEPARTMENT_OPTIONS = [
   { label: "OPD", slug: "opd" },
@@ -21,6 +22,7 @@ const DEPARTMENT_OPTIONS = [
 ];
 
 export default function StaffLayout() {
+  useHeartbeat()
   // NotificationProvider below handles data polling.
   const navigate = useNavigate();
   const location = useLocation();

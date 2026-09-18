@@ -33,11 +33,11 @@ const REFRESH_COOKIE_OPTIONS = {
 
 // HELPER SET COOKIES FUNCTION
 
-const setcookie = (res , account , accounttype)=>{
-  const accessToken = generateaccessToken(account , accounttype);
-  const refreshToken = generaterefreshToken(account , accounttype);
-  res.cookie(ACCESS_COOKIE_NAME , accessToken , ACCESS_COOKIE_OPTIONS);
-  res.cookie(REFRESH_COOKIE_NAME , refreshToken , REFRESH_COOKIE_OPTIONS);
+const setcookie = (res, account, accounttype) => {
+  const accessToken = generateaccessToken(account, accounttype);
+  const refreshToken = generaterefreshToken(account, accounttype);
+  res.cookie(ACCESS_COOKIE_NAME, accessToken, ACCESS_COOKIE_OPTIONS);
+  res.cookie(REFRESH_COOKIE_NAME, refreshToken, REFRESH_COOKIE_OPTIONS);
 }
 
 
@@ -69,7 +69,7 @@ export const signup = async (req, res) => {
     });
     console.log("user created", user.name, user.email, user.role)
 
-    setcookie(res , user , "admin")
+    setcookie(res, user, "admin")
 
     res.status(201).json({
       user: { id: user.id, name: user.name, email: user.email, role: user.role, title: user.title },
@@ -132,7 +132,7 @@ export const signupStaff = async (req, res) => {
       hospitalId: decoded.hospitalId,
     });
 
-    setcookie(res, staff , "staff")
+    setcookie(res, staff, "staff")
 
     // FIX: this was missing — hospitalName below referenced `hospital`
     // without ever declaring/fetching it, throwing ReferenceError.
@@ -158,7 +158,7 @@ export const signupStaff = async (req, res) => {
 
     return res.status(201).json({
       message: "Signup successful",
-       
+
       user: {
         id: staff.id,
         name: staff.name,
@@ -198,15 +198,15 @@ export const unifiedLogin = async (req, res) => {
     // Try admin/User table first
     const user = await User.findOne({ where: { email } });
     if (user && (await user.matchPassword(password))) {
-      
-    setcookie(res , user , "admin")
+
+      setcookie(res, user, "admin")
 
       const hospitalId = await resolveHospitalId(user, "admin");
 
 
       console.log("user has logged in");
       return res.json({
-        
+
         user: { id: user.id, name: user.name, email: user.email, role: user.role, title: user.title },
       });
     }
@@ -214,7 +214,11 @@ export const unifiedLogin = async (req, res) => {
     // Fall back to Staff table
     const staff = await Staff.findOne({ where: { email } });
     if (staff && (await bcrypt.compare(password, staff.passwordHash))) {
-      setcookie(res , staff , "staff")
+      setcookie(res, staff, "staff")
+
+      staff.isOnline = true;
+      staff.lastSeen = new Date()
+      await staff.save()
 
       const hospitalId = await resolveHospitalId(staff, "staff");
       if (!hospitalId) {
@@ -225,7 +229,7 @@ export const unifiedLogin = async (req, res) => {
       // FIX: this was missing — same ReferenceError as signupStaff above.
       const hospital = await Hospital.findByPk(hospitalId);
 
-      
+
 
       // Fire-and-forget: don't await this, and don't let it block/fail the login.
       // Must run BEFORE the return below, and inside this if-block, or it never executes.
@@ -261,6 +265,11 @@ export const logout = async (req, res) => {
 
 
     if (req.accountType === "staff") {
+
+      req.user.isOnline = false;
+      req.user.lastSeen = new Date(0);
+      await req.user.save();
+
       const hospitalId = await resolveHospitalId(req.user, "staff")
       if (hospitalId) {
         notify({
@@ -413,13 +422,13 @@ export const refresh = async (req, res) => {
 };
 
 export const getMe = async (req, res) => {
-    try {
-        const { id, name, email, title } = req.user
-        return res.status(200).json({
-            user: { id, name, email, title, role: req.accountType },
-        })
-    } catch (err) {
-        console.error("getMe error:", err)
-        res.status(500).json({ message: "Server error" })
-    }
+  try {
+    const { id, name, email, title } = req.user
+    return res.status(200).json({
+      user: { id, name, email, title, role: req.accountType },
+    })
+  } catch (err) {
+    console.error("getMe error:", err)
+    res.status(500).json({ message: "Server error" })
+  }
 }

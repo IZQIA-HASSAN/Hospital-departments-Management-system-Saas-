@@ -4,6 +4,7 @@ import { protect } from "../middleware/auth.js";
 import { authorize } from "../middleware/checkRole.js";
 // import { attachHospitalId } from "../middleware/resolveHospital.js";
 import { attachHospitalId } from "../middleware/resolveHospital.js";
+import { heartbeat } from "../controllers/Staffcontroller.js";
 
 const router = express.Router();
 
@@ -12,5 +13,6 @@ router.use(protect, authorize("admin"), attachHospitalId);
 router.get("/", getstaff);
 router.delete("/:id", delstaff);
 router.post("/invite", invitestaff);
+router.post("/heartbeat", protect, heartbeat);
 
 export default router;
