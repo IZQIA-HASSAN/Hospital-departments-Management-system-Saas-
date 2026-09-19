@@ -72,48 +72,48 @@ export default function EmergencyContent() {
       </div>
 
       {/* Active list — restyled to match the ICU/OPD chart card look */}
-      <div className=" border-neutral-200 rounded-xl bg-white overflow-hidden border h-80">
-        <div className="border-b border-neutral-200 px-6 py-4">
-          <h2 className="font-mono text-xs tracking-wide text-neutral-500">
-            ACTIVE EMERGENCIES {!loading && `(${alerts.length})`}
-          </h2>
-        </div>
+      <div className="flex h-[400px] flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white">
+  <div className="border-b border-neutral-200 px-6 py-4">
+    <h2 className="font-mono text-xs tracking-wide text-neutral-500">
+      ACTIVE EMERGENCIES {!loading && `(${alerts.length})`}
+    </h2>
+  </div>
 
-        <div className="overflow-y-scroll  h-[420px]">
-          {loading ? (
-            <p className="px-6 py-6 text-sm text-neutral-400">Loading...</p>
-          ) : alerts.length === 0 ? (
-            <p className="px-6 py-6 text-sm text-neutral-400">No active emergencies.</p>
-          ) : (
-            <ul className="divide-y divide-neutral-100">
-              {alerts.map((alert) => (
-                <li key={alert.id} className="flex items-center justify-between px-6 py-4">
-                  <div>
-                    <p className="text-sm font-medium text-neutral-800">
-                      {alert.patientName}
-                      {alert.age ? (
-                        <span className="font-normal text-neutral-400"> · {alert.age}</span>
-                      ) : null}
-                    </p>
-                    {alert.info && (
-                      <p className="mt-0.5 text-xs text-neutral-500">{alert.info}</p>
-                    )}
-                    <p className="mt-0.5 text-xs text-neutral-400">{timeAgo(alert.createdAt)}</p>
-                  </div>
+  <div className="flex-1 overflow-y-auto">
+    {loading ? (
+      <p className="px-6 py-6 text-sm text-neutral-400">Loading...</p>
+    ) : alerts.length === 0 ? (
+      <p className="px-6 py-6 text-sm text-neutral-400">No active emergencies.</p>
+    ) : (
+      <ul className="divide-y divide-neutral-100">
+        {alerts.map((alert) => (
+          <li key={alert.id} className="flex items-center justify-between px-6 py-4">
+            <div>
+              <p className="text-sm font-medium text-neutral-800">
+                {alert.patientName}
+                {alert.age ? (
+                  <span className="font-normal text-neutral-400"> · {alert.age}</span>
+                ) : null}
+              </p>
+              {alert.info && (
+                <p className="mt-0.5 text-xs text-neutral-500">{alert.info}</p>
+              )}
+              <p className="mt-0.5 text-xs text-neutral-400">{timeAgo(alert.createdAt)}</p>
+            </div>
 
-                  <button
-                    onClick={() => resolveAlert(alert.id)}
-                    className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
-                  >
-                    <Check className="h-3.5 w-3.5" />
-                    Resolve
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
+            <button
+              onClick={() => resolveAlert(alert.id)}
+              className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
+            >
+              <Check className="h-3.5 w-3.5" />
+              Resolve
+            </button>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</div>
 
       {/* Modal popup with the registration form */}
       {formOpen && (
