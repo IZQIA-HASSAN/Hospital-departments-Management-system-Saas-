@@ -57,10 +57,44 @@ export function NotificationProvider({ children }) {
         }
     }, []);
 
+    const deleteNotification = useCallback(async (id) => {
+        const prevNotifications = notifications;
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+        try {
+            const res = await apiFetch(`${API_BASE}/${id}`, { method: "DELETE" });
+            if (!res.ok) throw new Error(`Delete failed with status ${res.status}`);
+        } catch (err) {
+            console.error("Failed to delete notification:", err);
+            setNotifications(prevNotifications); // roll back on failure
+        }
+    }, [notifications]);
+
+    const clearReadNotifications = useCallback(async () => {
+        const prevNotifications = notifications;
+        setNotifications((prev) => prev.filter((n) => !n.read));
+        try {
+            const res = await apiFetch(`${API_BASE}?readOnly=true`, { method: "DELETE" });
+            if (!res.ok) throw new Error(`Clear read failed with status ${res.status}`);
+        } catch (err) {
+            console.error("Failed to clear read notifications:", err);
+            setNotifications(prevNotifications); // roll back on failure
+        }
+    }, [notifications]);
+
     const unreadCount = notifications.filter((n) => !n.read).length;
 
     return (
-        <NotificationContext.Provider value={{ notifications, unreadCount, loading, markOneRead, markAllRead }}>
+        <NotificationContext.Provider
+            value={{
+                notifications,
+                unreadCount,
+                loading,
+                markOneRead,
+                markAllRead,
+                deleteNotification,
+                clearReadNotifications,
+            }}
+        >
             {children}
         </NotificationContext.Provider>
     );

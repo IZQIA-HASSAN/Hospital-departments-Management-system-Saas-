@@ -1,6 +1,6 @@
 // src/components/NotificationBell.jsx
 import { useState, useEffect, useRef } from "react";
-import { Bell, ShieldAlert, LogIn, LogOut, BedDouble, UserRound } from "lucide-react";
+import { Bell, ShieldAlert, LogIn, LogOut, BedDouble, UserRound, X } from "lucide-react";
 import { useNotifications } from "../context/Notifycontext";
 
 const TYPE_ICONS = {
@@ -28,7 +28,14 @@ function timeAgo(dateStr) {
 }
 
 export default function NotificationBell() {
-  const { notifications, unreadCount, markOneRead, markAllRead } = useNotifications();
+  const {
+    notifications,
+    unreadCount,
+    markOneRead,
+    markAllRead,
+    deleteNotification,
+    clearReadNotifications,
+  } = useNotifications();
   const [open, setOpen] = useState(false);
   const panelRef = useRef(null);
 
@@ -39,6 +46,8 @@ export default function NotificationBell() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const hasRead = notifications.some((n) => n.read);
 
   return (
     <div className="relative " ref={panelRef}>
@@ -59,11 +68,21 @@ export default function NotificationBell() {
         <div className="absolute right-0 z-10 mt-2 w-96 rounded-xl border border-neutral-200 bg-white shadow-lg">
           <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-3">
             <h3 className="text-sm font-semibold text-neutral-700">Notifications</h3>
-            {unreadCount > 0 && (
-              <button onClick={markAllRead} className="text-xs font-medium text-rose-700 hover:underline">
-                Mark all read
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {hasRead && (
+                <button
+                  onClick={clearReadNotifications}
+                  className="text-xs font-medium text-neutral-500 hover:underline"
+                >
+                  Clear read
+                </button>
+              )}
+              {unreadCount > 0 && (
+                <button onClick={markAllRead} className="text-xs font-medium text-rose-700 hover:underline">
+                  Mark all read
+                </button>
+              )}
+            </div>
           </div>
 
           <ul className="max-h-96 overflow-y-auto divide-y divide-neutral-100">
@@ -76,7 +95,7 @@ export default function NotificationBell() {
                   <li
                     key={n.id}
                     onClick={() => !n.read && markOneRead(n.id)}
-                    className={`flex cursor-pointer items-start gap-3 px-4 py-3 text-sm hover:bg-neutral-50 ${
+                    className={`group flex cursor-pointer items-start gap-3 px-4 py-3 text-sm hover:bg-neutral-50 ${
                       n.read ? "text-neutral-400" : "text-neutral-800"
                     }`}
                   >
@@ -86,6 +105,16 @@ export default function NotificationBell() {
                       <p className="mt-0.5 text-xs text-neutral-400">{timeAgo(n.createdAt)}</p>
                     </div>
                     {!n.read && <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${SEVERITY_DOT[n.severity]}`} />}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteNotification(n.id);
+                      }}
+                      className="ml-1 shrink-0 rounded p-1 text-neutral-300 opacity-0 hover:bg-neutral-200 hover:text-neutral-600 group-hover:opacity-100"
+                      aria-label="Delete notification"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
                   </li>
                 );
               })

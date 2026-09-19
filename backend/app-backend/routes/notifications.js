@@ -144,4 +144,27 @@ router.patch("/emergency/:id/resolve", async (req, res) => {
   res.json(alert);
 });
 
+// DELETE /api/notifications/:id
+router.delete("/:id", async (req, res) => {
+  const deleteCount = await Notification.destroy({
+    where: { id: req.params.id, hospitalId: req.hospitalId },
+  });
+
+  if (deleteCount === 0) return res.status(404).json({ error: "Not found" });
+
+  res.json({ success: true });
+});
+
+// DELETE /api/notifications (bulk delete — e.g. "clear all read")
+router.delete("/", async (req, res) => {
+  const { readOnly } = req.query;
+  const where = { hospitalId: req.hospitalId };
+
+  if (readOnly === "true") where.read = true;
+
+  const deleteCount = await Notification.destroy({ where });
+
+  res.json({ success: true, deleted: deleteCount });
+});
+
 export default router
