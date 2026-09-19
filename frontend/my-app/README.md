@@ -660,3 +660,6 @@ Hospital
 # Project Goal
 
 Build a production-ready Hospital Information System that demonstrates full-stack software engineering skills, including scalable architecture, relational database design, authentication, authorization, workflow automation, reporting, and healthcare-focused data management.
+
+
+need to solve some issues 
